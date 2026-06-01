@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#0f766e" />
+    <meta
+      name="description"
+      content="Convert between Uyghur Arabic script (UEY) and Uyghur Latin Yéziqi (ULY), search a Uyghur-English dictionary, and study Uyghur script."
+    />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="UG Bridge" />
+    <meta property="og:title" content="UG Bridge" />
+    <meta
+      property="og:description"
+      content="Convert between UEY and ULY, search a Uyghur-English dictionary, and study Uyghur script."
+    />
+    <meta property="og:url" content="https://ugbr1dge.web.app/" />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="UG Bridge" />
+    <meta
+      name="twitter:description"
+      content="Convert between UEY and ULY, search a Uyghur-English dictionary, and study Uyghur script."
+    />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="icon" href="/icon.svg" type="image/svg+xml" />
+    <title>UG Bridge</title>
+  </head>
+  <body>
+    <script>
+      (() => {
+        try {
+          const storageKey = 'ulybridge.theme.mode.v1';
+          const stored = localStorage.getItem(storageKey);
+          const mode = stored === 'dark' || stored === 'light'
+            ? stored
+            : 'system';
+          const theme = mode === 'system'
+            ? (matchMedia('(prefers-color-scheme: dark)').matches
+              ? 'dark'
+              : 'light')
+            : mode;
+          document.documentElement.dataset.themeMode = mode;
+          document.documentElement.dataset.theme = theme;
+          document.documentElement.style.colorScheme = theme;
+          const themeColor = document.querySelector('meta[name="theme-color"]');
+          if (themeColor) {
+            themeColor.content = theme === 'dark' ? '#020617' : '#0f766e';
+          }
+        } catch {
+          document.documentElement.dataset.theme = 'light';
+          document.documentElement.style.colorScheme = 'light';
+        }
+      })();
+    </script>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
