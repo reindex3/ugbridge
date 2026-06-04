@@ -162,6 +162,23 @@ describe('ALPHABET_STUDY_ENTRIES', () => {
     );
   });
 
+  it('covers each practical form shown for right-joining vowels', () => {
+    const entry = ALPHABET_STUDY_ENTRIES.find((item) => item.token === 'ö');
+
+    expect(entry?.forms.map((form) => form.label)).toEqual([
+      'word-initial',
+      'isolated',
+      'final',
+    ]);
+    expect(entry?.examples.map((example) => example.label)).toEqual([
+      'word-initial',
+      'isolated',
+      'final',
+    ]);
+    expect(entry?.examples.find((example) => example.label === 'isolated'))
+      .toMatchObject({ uly: 'dölet', uey: 'دۆلەت', english: 'state' });
+  });
+
   it('uses corrected common word examples', () => {
     const g = ALPHABET_STUDY_ENTRIES.find((item) => item.token === 'g');
     const s = ALPHABET_STUDY_ENTRIES.find((item) => item.token === 's');

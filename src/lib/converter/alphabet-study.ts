@@ -212,6 +212,7 @@ const EXAMPLE_WORDS: ExampleWord[] = [
   { uly: 'kolléj', english: 'college' },
   { uly: 'kollézh', english: 'college' },
   { uly: 'kollezh', english: 'college' },
+  { uly: 'dölet', english: 'state' },
   { uly: 'köp', english: 'many' },
   { uly: 'kün', english: 'day' },
   { uly: 'mektep', english: 'school' },

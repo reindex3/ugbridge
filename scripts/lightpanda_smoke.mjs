@@ -28,6 +28,13 @@ const checks = [
     waitScript: "document.body && document.body.textContent.includes('ياخشى')",
     expected: ['Dictionary search', 'ياخشى', 'yaxshi'],
   },
+  {
+    name: 'alphabet detail covers right-joining vowel forms',
+    path: '/?view=alphabet',
+    waitScript:
+      "(() => { const body = document.body; if (!body) return false; const buttons = Array.from(document.querySelectorAll('button')); const button = buttons.find((item) => item.textContent && item.textContent.includes('ö')); if (button && !body.textContent.includes('dölet')) button.click(); return body.textContent.includes('dölet') && body.textContent.includes('دۆلەت') && body.textContent.includes('isolated'); })()",
+    expected: ['Learn alphabet', 'ö', 'isolated', 'dölet', 'دۆلەت'],
+  },
 ];
 
 const viteBin = join(
