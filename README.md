@@ -51,14 +51,15 @@
   word-initial hamza behavior, and Uyghur letter forms.
 - **Search offline dictionary data** from the home page or dictionary view by
   UEY, ULY, or English with suggestions, matched-text highlighting,
-  cross-script fallbacks, recent searches, copy actions, and lazy-loaded static
-  shards.
+  cross-script fallbacks, recent searches, saved lookup records, copy actions,
+  and lazy-loaded static shards.
 - **Study and practice UEY** through vowel-highlighted letter breakdowns,
   alphabet pages, browser-shaped highlighted examples, connected joining-form
-  samples, letter progress, and a quiz covering all 32 sounds.
+  samples, letter progress, and local quiz progress covering all 32 sounds.
 - **Customize local workflows** with browser-local custom words, recent
-  conversions, ULY input helpers, system/day/night theme settings, and
-  installable PWA shell caching.
+  conversions, ULY input helpers, a local study profile with JSON
+  export/import, system/day/night theme settings, and installable PWA shell
+  caching.
 - **Render UEY consistently** with a bundled UKIJ Ekran webfont for Uyghur
   Arabic script text.
 - **Surface basic project information** with a homepage disclaimer, contact
@@ -119,6 +120,7 @@ src/
 │   ├── tts/                 # TTS provider interface and implementations
 │   ├── conversion-history.ts
 │   ├── custom-transliterations.ts
+│   ├── local-profile.ts
 │   └── firebase.ts
 ├── App.tsx                  # view, direction, and app composition state
 ├── main.tsx

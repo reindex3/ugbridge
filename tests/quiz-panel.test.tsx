@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { QuizPanel } from '../src/components/QuizPanel';
 
 const LEARN_PROGRESS_KEY = 'ugbridge.learnedLetters.v1';
+const QUIZ_PROGRESS_KEY = 'ugbridge.quiz.progress.v1';
 
 describe('QuizPanel', () => {
   beforeEach(() => {
@@ -36,5 +37,34 @@ describe('QuizPanel', () => {
     expect(screen.getByText('2/32 marked learned')).toBeInTheDocument();
     expect(screen.getByText('1/8')).toBeInTheDocument();
     expect(screen.getByText('1/5')).toBeInTheDocument();
+  });
+
+  it('shows saved local quiz progress', () => {
+    window.localStorage.setItem(
+      QUIZ_PROGRESS_KEY,
+      JSON.stringify({
+        answered: 8,
+        correct: 6,
+        currentStreak: 1,
+        bestStreak: 3,
+        updatedAt: 1,
+        missedItems: [
+          {
+            id: 'sh:medial',
+            token: 'sh',
+            form: 'medial',
+            missed: 2,
+            updatedAt: 1,
+          },
+        ],
+      }),
+    );
+
+    render(<QuizPanel />);
+
+    expect(
+      screen.getByText('8 answered · 75% correct · best streak 3'),
+    ).toBeInTheDocument();
+    expect(screen.getByText('sh · medial · 2 missed')).toBeInTheDocument();
   });
 });

@@ -7,6 +7,11 @@ import {
   type DictionarySearchResult,
 } from '../lib/dictionary';
 import { ueyToUly, ulyToUey } from '../lib/converter';
+import {
+  loadDictionaryLookups,
+  recordDictionaryLookup,
+  saveDictionaryLookups,
+} from '../lib/local-profile';
 import { useDictionaryLookup } from '../hooks/useDictionaryLookup';
 import { UlyInputHelper } from './UlyInputHelper';
 
@@ -43,6 +48,7 @@ export function DictionaryPanel({
   );
   const [panelNotice, setPanelNotice] = useState('');
   const inputRef = useRef<HTMLInputElement | null>(null);
+  const recordedLookupRef = useRef('');
   const {
     results,
     suggestions,
@@ -66,6 +72,23 @@ export function DictionaryPanel({
 
     return () => window.clearTimeout(timer);
   }, [isLoading, query]);
+
+  useEffect(() => {
+    const trimmed = query.trim();
+    if (!trimmed || isLoading || !results.length) return;
+
+    const entry = results[0].entry;
+    const recordKey = `${trimmed.toLocaleLowerCase()}:${entry.id}`;
+    if (recordedLookupRef.current === recordKey) return;
+
+    recordedLookupRef.current = recordKey;
+    saveDictionaryLookups(
+      recordDictionaryLookup(loadDictionaryLookups(), {
+        query: trimmed,
+        entry,
+      }),
+    );
+  }, [isLoading, query, results]);
 
   const showPanelNotice = (message: string) => {
     setPanelNotice(message);

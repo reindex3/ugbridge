@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { Trash2 } from 'lucide-react';
 import {
   ALPHABET_STUDY_ENTRIES,
   getUeyPresentationGlyph,
@@ -7,6 +8,14 @@ import {
   type AlphabetStudyEntry,
   type UeyJoiningForm,
 } from '../lib/converter';
+import {
+  clearQuizProgress,
+  getQuizAccuracy,
+  loadQuizProgress,
+  recordQuizAnswer,
+  saveQuizProgress,
+  type QuizProgress,
+} from '../lib/local-profile';
 import { LetterProgressPanel } from './LetterProgressPanel';
 
 type QuizMode = 'sound' | 'shape';
@@ -48,6 +57,8 @@ export function QuizPanel() {
   const [reviewNoticeOpen, setReviewNoticeOpen] = useState(false);
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
   const [score, setScore] = useState(0);
+  const [savedProgress, setSavedProgress] =
+    useState<QuizProgress>(loadQuizProgress);
   const quizItems = useMemo(() => shuffleItems(buildQuizItems()), []);
   const item =
     phase === 'review'
@@ -93,8 +104,18 @@ export function QuizPanel() {
 
   const chooseAnswer = (answer: string) => {
     if (answered) return;
+    const isCorrect = answer === correctAnswer;
     setSelectedAnswer(answer);
-    if (answer === correctAnswer) setScore((current) => current + 1);
+    if (isCorrect) setScore((current) => current + 1);
+    setSavedProgress((current) =>
+      saveQuizProgress(
+        recordQuizAnswer(current, {
+          token: item.entry.token,
+          form: item.form,
+          correct: isCorrect,
+        }),
+      ),
+    );
   };
 
   const nextPracticeQuestion = () => {
@@ -159,6 +180,10 @@ export function QuizPanel() {
     return (
       <div className="grid gap-6">
         <LetterProgressPanel />
+        <QuizLocalProgressPanel
+          progress={savedProgress}
+          onReset={() => setSavedProgress(clearQuizProgress())}
+        />
         <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-xs">
           <div className="grid gap-4">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -204,6 +229,10 @@ export function QuizPanel() {
   return (
     <div className="grid gap-6">
       <LetterProgressPanel />
+      <QuizLocalProgressPanel
+        progress={savedProgress}
+        onReset={() => setSavedProgress(clearQuizProgress())}
+      />
       <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-xs">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>
@@ -331,6 +360,56 @@ export function QuizPanel() {
         )}
       </section>
     </div>
+  );
+}
+
+function QuizLocalProgressPanel({
+  progress,
+  onReset,
+}: {
+  progress: QuizProgress;
+  onReset: () => void;
+}) {
+  const accuracy = getQuizAccuracy(progress);
+  const topMisses = progress.missedItems.slice(0, 4);
+
+  return (
+    <section className="rounded-lg border border-slate-200 bg-white p-4 shadow-xs">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <h2 className="text-sm font-semibold text-slate-800">
+            Saved quiz progress
+          </h2>
+          <p className="mt-1 text-sm leading-6 text-slate-500">
+            {progress.answered
+              ? `${progress.answered} answered · ${accuracy}% correct · best streak ${progress.bestStreak}`
+              : 'No quiz answers saved yet.'}
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={onReset}
+          disabled={!progress.answered}
+          className="inline-flex w-fit items-center gap-2 rounded-md border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-600 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
+          Reset
+        </button>
+      </div>
+
+      {topMisses.length ? (
+        <div className="mt-3 flex flex-wrap gap-2">
+          {topMisses.map((item) => (
+            <span
+              key={item.id}
+              className="rounded-full bg-rose-50 px-2.5 py-1 text-xs font-semibold text-rose-700 ring-1 ring-rose-100"
+            >
+              {item.token} · {item.form} · {item.missed} missed
+            </span>
+          ))}
+        </div>
+      ) : null}
+    </section>
   );
 }
 

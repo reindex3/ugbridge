@@ -63,6 +63,15 @@ import {
   saveCustomTransliterations,
   type CustomTransliterationEntry,
 } from './lib/custom-transliterations';
+import {
+  exportLocalProfileData,
+  getQuizAccuracy,
+  importLocalProfileData,
+  loadDictionaryLookups,
+  loadQuizProgress,
+  type DictionaryLookupRecord,
+  type QuizProgress,
+} from './lib/local-profile';
 
 type Direction = 'uey-to-uly' | 'uly-to-uey';
 type View = 'home' | 'convert' | 'learn' | 'quiz' | 'alphabet' | 'dictionary';
@@ -865,6 +874,13 @@ function HomePanel({
         />
       </section>
 
+      <LocalProfilePanel
+        onOpenLookup={(query) => {
+          onDictionaryQueryChange(query);
+          onDictionary();
+        }}
+      />
+
       <section className="grid gap-3 md:grid-cols-2 lg:grid-cols-5">
         <HomeFeature
           icon={<Languages className="h-5 w-5" aria-hidden="true" />}
@@ -954,6 +970,178 @@ function HomeFooter() {
         </a>
       </div>
     </footer>
+  );
+}
+
+function LocalProfilePanel({
+  onOpenLookup,
+}: {
+  onOpenLookup: (query: string) => void;
+}) {
+  const [lookups, setLookups] = useState<DictionaryLookupRecord[]>(
+    loadDictionaryLookups,
+  );
+  const [quizProgress, setQuizProgress] =
+    useState<QuizProgress>(loadQuizProgress);
+  const [status, setStatus] = useState('');
+  const importInputRef = useRef<HTMLInputElement | null>(null);
+  const accuracy = getQuizAccuracy(quizProgress);
+  const topLookups = lookups.slice(0, 6);
+
+  const showStatus = (message: string) => {
+    setStatus(message);
+    window.setTimeout(() => setStatus(''), 1800);
+  };
+
+  const exportProfile = () => {
+    const data = exportLocalProfileData();
+    const blob = new Blob([JSON.stringify(data, null, 2)], {
+      type: 'application/json;charset=utf-8',
+    });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'ugbridge-local-profile.json';
+    link.click();
+    URL.revokeObjectURL(url);
+    showStatus('Local profile exported');
+  };
+
+  const importProfile = async (file: File | undefined) => {
+    if (!file) return;
+
+    try {
+      const imported = importLocalProfileData(JSON.parse(await file.text()));
+      setLookups(imported.dictionaryLookups);
+      setQuizProgress(imported.quizProgress);
+      showStatus('Local profile imported');
+    } catch {
+      showStatus('Import failed');
+    }
+  };
+
+  return (
+    <section className="rounded-lg border border-slate-200 bg-white p-4 shadow-xs">
+      <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+        <div>
+          <div className="inline-flex items-center gap-2 text-sm font-semibold text-slate-800">
+            <ShieldCheck className="h-4 w-4 text-emerald-600" aria-hidden="true" />
+            Local study profile
+          </div>
+          <p className="mt-1 max-w-2xl text-sm leading-6 text-slate-500">
+            Dictionary lookups and quiz progress stay in this browser, with
+            JSON backup for moving between devices.
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={exportProfile}
+            className={BUTTON_CLASS}
+          >
+            <Download className="h-4 w-4" aria-hidden="true" />
+            Export JSON
+          </button>
+          <button
+            type="button"
+            onClick={() => importInputRef.current?.click()}
+            className={BUTTON_CLASS}
+          >
+            <Upload className="h-4 w-4" aria-hidden="true" />
+            Import JSON
+          </button>
+        </div>
+      </div>
+
+      <input
+        ref={importInputRef}
+        type="file"
+        accept="application/json,.json"
+        className="hidden"
+        onChange={(event) => {
+          importProfile(event.target.files?.[0]);
+          event.target.value = '';
+        }}
+      />
+
+      <div className="mt-4 grid gap-3 md:grid-cols-3">
+        <LocalProfileStat
+          label="Saved lookups"
+          value={String(lookups.length)}
+          detail={lookups.length ? `${lookups[0].uly} most recent` : 'No words yet'}
+        />
+        <LocalProfileStat
+          label="Quiz answered"
+          value={String(quizProgress.answered)}
+          detail={
+            quizProgress.answered
+              ? `${accuracy}% correct · best streak ${quizProgress.bestStreak}`
+              : 'No answers yet'
+          }
+        />
+        <LocalProfileStat
+          label="Needs review"
+          value={String(quizProgress.missedItems.length)}
+          detail={
+            quizProgress.missedItems[0]
+              ? `${quizProgress.missedItems[0].token} · ${quizProgress.missedItems[0].form}`
+              : 'No misses saved'
+          }
+        />
+      </div>
+
+      {topLookups.length ? (
+        <div className="mt-4 flex flex-wrap gap-2">
+          {topLookups.map((lookup) => (
+            <button
+              key={lookup.id}
+              type="button"
+              onClick={() => onOpenLookup(lookup.query || lookup.uly)}
+              className="max-w-full rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-left text-xs font-semibold text-slate-700 transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700"
+              title={`${lookup.uly} · ${lookup.definition}`}
+            >
+              <span dir="rtl" lang="ug">
+                {lookup.uey}
+              </span>{' '}
+              · {lookup.uly}
+              {lookup.count > 1 ? ` · ${lookup.count}x` : ''}
+            </button>
+          ))}
+        </div>
+      ) : null}
+
+      {status ? (
+        <div
+          role="status"
+          aria-live="polite"
+          className="mt-3 inline-flex rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700"
+        >
+          {status}
+        </div>
+      ) : null}
+    </section>
+  );
+}
+
+function LocalProfileStat({
+  label,
+  value,
+  detail,
+}: {
+  label: string;
+  value: string;
+  detail: string;
+}) {
+  return (
+    <div className="rounded-md bg-slate-50 px-3 py-3 ring-1 ring-slate-200">
+      <div className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+        {label}
+      </div>
+      <div className="mt-1 text-2xl font-bold text-slate-950">{value}</div>
+      <div className="mt-1 min-h-5 truncate text-xs font-medium text-slate-500">
+        {detail}
+      </div>
+    </div>
   );
 }
 

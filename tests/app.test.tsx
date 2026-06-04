@@ -193,6 +193,49 @@ describe('App conversion workflow', () => {
 
     expect(screen.getByLabelText('Dictionary search')).toBeInTheDocument();
   });
+
+  it('shows local study profile data on the home page', () => {
+    window.localStorage.setItem(
+      'ugbridge.dictionary.lookups.v1',
+      JSON.stringify([
+        {
+          id: 'yaxshi',
+          query: 'good',
+          uey: 'ياخشى',
+          uly: 'yaxshi',
+          definition: 'good',
+          count: 2,
+          updatedAt: 2,
+        },
+      ]),
+    );
+    window.localStorage.setItem(
+      'ugbridge.quiz.progress.v1',
+      JSON.stringify({
+        answered: 4,
+        correct: 3,
+        currentStreak: 1,
+        bestStreak: 2,
+        updatedAt: 2,
+        missedItems: [
+          {
+            id: 'ng:final',
+            token: 'ng',
+            form: 'final',
+            missed: 1,
+            updatedAt: 2,
+          },
+        ],
+      }),
+    );
+
+    render(<App />);
+
+    expect(screen.getByText('Local study profile')).toBeInTheDocument();
+    expect(screen.getByText('75% correct · best streak 2')).toBeInTheDocument();
+    expect(screen.getByText('ng · final')).toBeInTheDocument();
+    expect(screen.getByTitle('yaxshi · good')).toBeInTheDocument();
+  });
 });
 
 function getConversionInput() {
