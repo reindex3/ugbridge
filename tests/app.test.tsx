@@ -237,13 +237,20 @@ describe('App conversion workflow', () => {
     const heroHeading = screen.getByRole('heading', {
       name: 'Convert, search, and study Uyghur across UEY and ULY.',
     });
+    const dictionaryHeading = screen.getByRole('heading', {
+      name: 'Dictionary',
+    });
 
     expect(profileHeading).toBeInTheDocument();
     expect(
       screen.getByText(/To avoid retaining study data on a backend/),
     ).toBeInTheDocument();
     expect(
-      profileHeading.compareDocumentPosition(heroHeading) &
+      heroHeading.compareDocumentPosition(profileHeading) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(
+      profileHeading.compareDocumentPosition(dictionaryHeading) &
         Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy();
     expect(screen.getByText('75% correct · best streak 2')).toBeInTheDocument();

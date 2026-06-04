@@ -13,7 +13,7 @@ const checks = [
     name: 'home loads',
     path: '/',
     waitScript:
-      "document.body && document.body.textContent.includes('Privacy-first local profile') && document.querySelector('#dictionary-search')",
+      "(() => { const text = document.body?.textContent || ''; return text.includes('Uyghur script workspace') && text.includes('Privacy-first local profile') && text.indexOf('Uyghur script workspace') < text.indexOf('Privacy-first local profile') && document.querySelector('#dictionary-search'); })()",
     expected: [
       'UG Bridge',
       'Privacy-first local profile',

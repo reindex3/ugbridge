@@ -808,13 +808,6 @@ function HomePanel({
 }) {
   return (
     <main className="grid gap-6">
-      <LocalProfilePanel
-        onOpenLookup={(query) => {
-          onDictionaryQueryChange(query);
-          onDictionary();
-        }}
-      />
-
       <section className="grid gap-5 py-3 lg:grid-cols-[minmax(0,1.1fr)_minmax(20rem,0.9fr)] lg:items-center">
         <div>
           <p className="text-sm font-semibold uppercase tracking-[0.18em] text-indigo-600">
@@ -853,6 +846,13 @@ function HomePanel({
 
         <HomePreview />
       </section>
+
+      <LocalProfilePanel
+        onOpenLookup={(query) => {
+          onDictionaryQueryChange(query);
+          onDictionary();
+        }}
+      />
 
       <section className="grid gap-3" aria-label="Home dictionary search">
         <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
