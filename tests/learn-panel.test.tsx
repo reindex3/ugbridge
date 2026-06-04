@@ -33,6 +33,39 @@ describe('LearnPanel', () => {
     expect(screen.getAllByText('vowel').length).toBeGreaterThan(0);
   });
 
+  it('makes vowel highlights prominent in breakdown and word shape views', () => {
+    render(
+      <LearnPanel
+        trace={traceConversion('yaxshimisiz', 'uly-to-uey')}
+        value="yaxshimisiz"
+        onChange={vi.fn()}
+      />,
+    );
+
+    const breakdownVowelTile = screen.getAllByText('vowel')[0].closest('div');
+    expect(breakdownVowelTile).toHaveClass(
+      'border-2',
+      'bg-emerald-100',
+      'ring-2',
+    );
+
+    const wordShape = screen
+      .getByRole('heading', { name: 'Word shape study' })
+      .closest('section');
+    expect(wordShape).not.toBeNull();
+
+    const vowelCell = within(wordShape!)
+      .getByText('a')
+      .closest('dl')?.parentElement;
+    const consonantCell = within(wordShape!)
+      .getByText('x')
+      .closest('dl')?.parentElement;
+
+    expect(vowelCell).toHaveClass('bg-emerald-100', 'ring-2', 'ring-inset');
+    expect(consonantCell).toHaveClass('bg-white');
+    expect(consonantCell).not.toHaveClass('ring-2');
+  });
+
   it('makes digraph and vowel reference tiles visually prominent', () => {
     render(
       <LearnPanel

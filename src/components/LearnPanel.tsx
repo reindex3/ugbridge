@@ -194,7 +194,7 @@ function LetterArrowTile({ letter }: { letter: UeyStudyLetter }) {
 
   return (
     <div
-      className={`grid min-w-15 justify-items-center gap-1 rounded-md px-1.5 py-2 ring-1 ${letterRoleTileClass(
+      className={`grid min-w-15 justify-items-center gap-1 rounded-md px-1.5 py-2 ${letterRoleTileClass(
         letter.role,
       )}`}
     >
@@ -351,16 +351,26 @@ function formClass(form: UeyStudyLetter['form']) {
 }
 
 function letterRoleTileClass(role: UeyStudyLetter['role']) {
-  if (role === 'vowel') return 'bg-emerald-50 text-emerald-950 ring-emerald-200';
-  if (role === 'hamza-vowel') return 'bg-amber-50 text-amber-950 ring-amber-200';
-  if (role === 'carrier') return 'bg-amber-50 text-amber-950 ring-amber-200';
-  return 'bg-slate-50 text-slate-950 ring-slate-200';
+  if (role === 'vowel') {
+    return 'border-2 border-emerald-400 bg-emerald-100 text-emerald-950 shadow-sm ring-2 ring-emerald-200';
+  }
+  if (role === 'hamza-vowel') {
+    return 'border-2 border-amber-400 bg-amber-100 text-amber-950 shadow-sm ring-2 ring-amber-200';
+  }
+  if (role === 'carrier') {
+    return 'border-2 border-amber-400 bg-amber-100 text-amber-950 shadow-sm ring-2 ring-amber-200';
+  }
+  return 'border border-slate-200 bg-white text-slate-950 ring-1 ring-slate-200';
 }
 
 function letterRoleCellClass(role: UeyStudyLetter['role']) {
-  if (role === 'vowel') return 'bg-emerald-50';
-  if (role === 'hamza-vowel' || role === 'carrier') return 'bg-amber-50';
-  return '';
+  if (role === 'vowel') {
+    return 'bg-emerald-100 shadow-sm ring-2 ring-inset ring-emerald-300';
+  }
+  if (role === 'hamza-vowel' || role === 'carrier') {
+    return 'bg-amber-100 shadow-sm ring-2 ring-inset ring-amber-300';
+  }
+  return 'bg-white';
 }
 
 function letterRoleBadgeClass(role: UeyStudyLetter['role']) {
