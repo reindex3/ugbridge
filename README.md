@@ -57,9 +57,9 @@
   alphabet pages, browser-shaped highlighted examples, connected joining-form
   samples, letter progress, and local quiz progress covering all 32 sounds.
 - **Customize local workflows** with browser-local custom words, recent
-  conversions, ULY input helpers, a local study profile with JSON
-  export/import, system/day/night theme settings, and installable PWA shell
-  caching.
+  conversions, ULY input helpers, a privacy-first local study profile with JSON
+  export/import and no retained backend profile data, system/day/night theme
+  settings, and installable PWA shell caching.
 - **Render UEY consistently** with a bundled UKIJ Ekran webfont for Uyghur
   Arabic script text.
 - **Surface basic project information** with a homepage disclaimer, contact

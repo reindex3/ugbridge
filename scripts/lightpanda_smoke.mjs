@@ -13,8 +13,13 @@ const checks = [
     name: 'home loads',
     path: '/',
     waitScript:
-      "document.body && document.body.textContent.includes('UG Bridge') && document.querySelector('#dictionary-search')",
-    expected: ['UG Bridge', 'Dictionary search'],
+      "document.body && document.body.textContent.includes('Privacy-first local profile') && document.querySelector('#dictionary-search')",
+    expected: [
+      'UG Bridge',
+      'Privacy-first local profile',
+      'Local study profile',
+      'Dictionary search',
+    ],
   },
   {
     name: 'converter restores shared text',

@@ -808,6 +808,13 @@ function HomePanel({
 }) {
   return (
     <main className="grid gap-6">
+      <LocalProfilePanel
+        onOpenLookup={(query) => {
+          onDictionaryQueryChange(query);
+          onDictionary();
+        }}
+      />
+
       <section className="grid gap-5 py-3 lg:grid-cols-[minmax(0,1.1fr)_minmax(20rem,0.9fr)] lg:items-center">
         <div>
           <p className="text-sm font-semibold uppercase tracking-[0.18em] text-indigo-600">
@@ -873,13 +880,6 @@ function HomePanel({
           onConvert={onConvertDictionaryEntry}
         />
       </section>
-
-      <LocalProfilePanel
-        onOpenLookup={(query) => {
-          onDictionaryQueryChange(query);
-          onDictionary();
-        }}
-      />
 
       <section className="grid gap-3 md:grid-cols-2 lg:grid-cols-5">
         <HomeFeature
@@ -1021,17 +1021,25 @@ function LocalProfilePanel({
   };
 
   return (
-    <section className="rounded-lg border border-slate-200 bg-white p-4 shadow-xs">
+    <section className="rounded-lg border-2 border-emerald-200 bg-white p-5 shadow-sm ring-4 ring-emerald-50">
       <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-        <div>
-          <div className="inline-flex items-center gap-2 text-sm font-semibold text-slate-800">
-            <ShieldCheck className="h-4 w-4 text-emerald-600" aria-hidden="true" />
-            Local study profile
+        <div className="flex gap-3">
+          <span className="grid h-11 w-11 shrink-0 place-items-center rounded-md bg-emerald-600 text-white shadow-xs">
+            <ShieldCheck className="h-5 w-5" aria-hidden="true" />
+          </span>
+          <div>
+            <p className="text-xs font-bold uppercase tracking-[0.16em] text-emerald-700">
+              Privacy-first local profile
+            </p>
+            <h2 className="mt-1 text-xl font-bold tracking-tight text-slate-950">
+              Local study profile
+            </h2>
+            <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
+              To avoid retaining study data on a backend, UG Bridge stores
+              dictionary lookups and quiz progress only in this browser. Export
+              JSON when you want a portable backup.
+            </p>
           </div>
-          <p className="mt-1 max-w-2xl text-sm leading-6 text-slate-500">
-            Dictionary lookups and quiz progress stay in this browser, with
-            JSON backup for moving between devices.
-          </p>
         </div>
         <div className="flex flex-wrap gap-2">
           <button
@@ -1133,7 +1141,7 @@ function LocalProfileStat({
   detail: string;
 }) {
   return (
-    <div className="rounded-md bg-slate-50 px-3 py-3 ring-1 ring-slate-200">
+    <div className="border-l-2 border-emerald-200 bg-emerald-50/70 px-3 py-3">
       <div className="text-xs font-semibold uppercase tracking-wide text-slate-400">
         {label}
       </div>

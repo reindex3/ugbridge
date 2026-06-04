@@ -231,7 +231,21 @@ describe('App conversion workflow', () => {
 
     render(<App />);
 
-    expect(screen.getByText('Local study profile')).toBeInTheDocument();
+    const profileHeading = screen.getByRole('heading', {
+      name: 'Local study profile',
+    });
+    const heroHeading = screen.getByRole('heading', {
+      name: 'Convert, search, and study Uyghur across UEY and ULY.',
+    });
+
+    expect(profileHeading).toBeInTheDocument();
+    expect(
+      screen.getByText(/To avoid retaining study data on a backend/),
+    ).toBeInTheDocument();
+    expect(
+      profileHeading.compareDocumentPosition(heroHeading) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
     expect(screen.getByText('75% correct · best streak 2')).toBeInTheDocument();
     expect(screen.getByText('ng · final')).toBeInTheDocument();
     expect(screen.getByTitle('yaxshi · good')).toBeInTheDocument();
