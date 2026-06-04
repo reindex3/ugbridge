@@ -313,13 +313,10 @@ function ReferenceTile({
 
   return (
     <div
-      className={`rounded-md px-2 py-2 text-center ring-1 ${
-        strong
-          ? 'bg-indigo-50 text-indigo-950 ring-indigo-100'
-          : isVowel
-            ? 'bg-emerald-50 text-emerald-950 ring-emerald-200'
-          : 'bg-slate-50 text-slate-950 ring-slate-200'
-      }`}
+      className={`grid min-h-20 content-center rounded-md px-2 py-2 text-center ${referenceTileClass(
+        strong,
+        isVowel,
+      )}`}
     >
       <div className="font-mono text-sm font-semibold">{source}</div>
       <div className="mt-0.5 font-mono text-xs font-semibold text-emerald-700">
@@ -334,6 +331,16 @@ function ReferenceTile({
 
 function isVowelToken(token: string) {
   return VOWEL_TOKENS.includes(token);
+}
+
+function referenceTileClass(strong: boolean, isVowel: boolean) {
+  if (strong) {
+    return 'border-2 border-indigo-400 bg-indigo-100 text-indigo-950 shadow-sm ring-2 ring-indigo-200';
+  }
+  if (isVowel) {
+    return 'border-2 border-emerald-400 bg-emerald-100 text-emerald-950 shadow-sm ring-2 ring-emerald-200';
+  }
+  return 'border border-slate-200 bg-white text-slate-950 ring-1 ring-slate-200';
 }
 
 function formClass(form: UeyStudyLetter['form']) {

@@ -29,6 +29,13 @@ const checks = [
     expected: ['Dictionary search', 'ياخشى', 'yaxshi'],
   },
   {
+    name: 'learn reference highlights categories',
+    path: '/?view=learn',
+    waitScript:
+      "(() => { const tileFor = (text) => Array.from(document.querySelectorAll('section div')).find((item) => item.firstElementChild && item.firstElementChild.textContent === text); const ch = tileFor('ch'); const a = tileFor('a'); return Boolean(ch && a && ch.classList.contains('bg-indigo-100') && ch.classList.contains('border-2') && a.classList.contains('bg-emerald-100') && a.classList.contains('border-2')); })()",
+    expected: ['ULY to UEY + IPA reference', 'ch', 'a', 'ا'],
+  },
+  {
     name: 'alphabet detail covers right-joining vowel forms',
     path: '/?view=alphabet',
     waitScript:
