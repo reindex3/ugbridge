@@ -986,7 +986,7 @@ function LocalProfilePanel({
   const [status, setStatus] = useState('');
   const importInputRef = useRef<HTMLInputElement | null>(null);
   const accuracy = getQuizAccuracy(quizProgress);
-  const topLookups = lookups.slice(0, 6);
+  const topLookups = lookups.slice(0, 4);
 
   const showStatus = (message: string) => {
     setStatus(message);
@@ -1021,20 +1021,20 @@ function LocalProfilePanel({
   };
 
   return (
-    <section className="rounded-lg border-2 border-emerald-200 bg-white p-5 shadow-sm ring-4 ring-emerald-50">
-      <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-        <div className="flex gap-3">
-          <span className="grid h-11 w-11 shrink-0 place-items-center rounded-md bg-emerald-600 text-white shadow-xs">
-            <ShieldCheck className="h-5 w-5" aria-hidden="true" />
+    <section className="rounded-lg border border-emerald-200 bg-white p-4 shadow-xs ring-1 ring-emerald-100">
+      <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
+        <div className="flex gap-2.5">
+          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-md bg-emerald-600 text-white shadow-xs">
+            <ShieldCheck className="h-4 w-4" aria-hidden="true" />
           </span>
           <div>
-            <p className="text-xs font-bold uppercase tracking-[0.16em] text-emerald-700">
+            <p className="text-[0.68rem] font-bold uppercase tracking-[0.14em] text-emerald-700">
               Privacy-first local profile
             </p>
-            <h2 className="mt-1 text-xl font-bold tracking-tight text-slate-950">
+            <h2 className="mt-0.5 text-lg font-bold tracking-tight text-slate-950">
               Local study profile
             </h2>
-            <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
+            <p className="mt-1 max-w-2xl text-xs leading-5 text-slate-600">
               To avoid retaining study data on a backend, UG Bridge stores
               dictionary lookups and quiz progress only in this browser. Export
               JSON when you want a portable backup.
@@ -1045,7 +1045,7 @@ function LocalProfilePanel({
           <button
             type="button"
             onClick={exportProfile}
-            className={BUTTON_CLASS}
+            className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-700 shadow-xs transition hover:bg-slate-50"
           >
             <Download className="h-4 w-4" aria-hidden="true" />
             Export JSON
@@ -1053,7 +1053,7 @@ function LocalProfilePanel({
           <button
             type="button"
             onClick={() => importInputRef.current?.click()}
-            className={BUTTON_CLASS}
+            className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-700 shadow-xs transition hover:bg-slate-50"
           >
             <Upload className="h-4 w-4" aria-hidden="true" />
             Import JSON
@@ -1072,7 +1072,7 @@ function LocalProfilePanel({
         }}
       />
 
-      <div className="mt-4 grid gap-3 md:grid-cols-3">
+      <div className="mt-3 grid gap-2 md:grid-cols-3">
         <LocalProfileStat
           label="Saved lookups"
           value={String(lookups.length)}
@@ -1099,13 +1099,13 @@ function LocalProfilePanel({
       </div>
 
       {topLookups.length ? (
-        <div className="mt-4 flex flex-wrap gap-2">
+        <div className="mt-3 flex flex-wrap gap-1.5">
           {topLookups.map((lookup) => (
             <button
               key={lookup.id}
               type="button"
               onClick={() => onOpenLookup(lookup.query || lookup.uly)}
-              className="max-w-full rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-left text-xs font-semibold text-slate-700 transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700"
+              className="max-w-full rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-left text-xs font-semibold text-slate-700 transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700"
               title={`${lookup.uly} · ${lookup.definition}`}
             >
               <span dir="rtl" lang="ug">
@@ -1122,7 +1122,7 @@ function LocalProfilePanel({
         <div
           role="status"
           aria-live="polite"
-          className="mt-3 inline-flex rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700"
+          className="mt-2 inline-flex rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700"
         >
           {status}
         </div>
@@ -1141,12 +1141,12 @@ function LocalProfileStat({
   detail: string;
 }) {
   return (
-    <div className="border-l-2 border-emerald-200 bg-emerald-50/70 px-3 py-3">
+    <div className="border-l-2 border-emerald-200 bg-emerald-50/70 px-3 py-2">
       <div className="text-xs font-semibold uppercase tracking-wide text-slate-400">
         {label}
       </div>
-      <div className="mt-1 text-2xl font-bold text-slate-950">{value}</div>
-      <div className="mt-1 min-h-5 truncate text-xs font-medium text-slate-500">
+      <div className="mt-0.5 text-xl font-bold text-slate-950">{value}</div>
+      <div className="mt-0.5 min-h-4 truncate text-xs font-medium text-slate-500">
         {detail}
       </div>
     </div>
