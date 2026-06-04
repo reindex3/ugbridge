@@ -11,6 +11,7 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "preview": "vite preview",
+    "smoke:lightpanda": "node scripts/lightpanda_smoke.mjs",
     "test": "vitest run",
     "test:watch": "vitest",
     "dictionary:build": "node scripts/build_dictionary_dataset.mjs",

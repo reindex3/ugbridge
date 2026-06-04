@@ -1,6 +1,6 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { KeyboardEvent } from 'react';
-import { GraduationCap, Repeat2, Search } from 'lucide-react';
+import { Copy, GraduationCap, Repeat2, Search } from 'lucide-react';
 import {
   type DictionarySearchMode,
   type DictionarySuggestion,
@@ -19,6 +19,8 @@ interface DictionaryPanelProps {
 
 const SUGGESTED_QUERIES = ['salam', 'ياخشى', 'book', 'apple', 'thank you'];
 const VISIBLE_DEFINITION_COUNT = 5;
+const RECENT_QUERY_STORAGE_KEY = 'ugbridge.dictionary.recent.v1';
+const MAX_RECENT_QUERIES = 8;
 const SEARCH_MODES: Array<{ mode: DictionarySearchMode; label: string }> = [
   { mode: 'auto', label: 'Auto' },
   { mode: 'english', label: 'English' },
@@ -36,6 +38,10 @@ export function DictionaryPanel({
     useState<DictionarySearchMode>('auto');
   const [isSuggesting, setIsSuggesting] = useState(false);
   const [selectedSuggestion, setSelectedSuggestion] = useState(0);
+  const [recentQueries, setRecentQueries] = useState<string[]>(
+    loadRecentDictionaryQueries,
+  );
+  const [panelNotice, setPanelNotice] = useState('');
   const inputRef = useRef<HTMLInputElement | null>(null);
   const {
     results,
@@ -49,6 +55,22 @@ export function DictionaryPanel({
   const hasQuery = query.trim().length > 0;
   const showSuggestions = isSuggesting && hasQuery && suggestions.length > 0;
   const showUlyHelper = searchMode === 'auto' || searchMode === 'uly';
+
+  useEffect(() => {
+    const trimmed = query.trim();
+    if (trimmed.length < 2 || isLoading) return;
+
+    const timer = window.setTimeout(() => {
+      setRecentQueries(saveRecentDictionaryQuery(trimmed));
+    }, 700);
+
+    return () => window.clearTimeout(timer);
+  }, [isLoading, query]);
+
+  const showPanelNotice = (message: string) => {
+    setPanelNotice(message);
+    window.setTimeout(() => setPanelNotice(''), 1800);
+  };
 
   const chooseSuggestion = (suggestion: DictionarySuggestion) => {
     onQueryChange(suggestion.value);
@@ -95,6 +117,26 @@ export function DictionaryPanel({
       const cursor = start + text.length;
       input.setSelectionRange(cursor, cursor);
     });
+  };
+
+  const chooseQuery = (value: string) => {
+    onQueryChange(value);
+    setIsSuggesting(false);
+    setSelectedSuggestion(0);
+  };
+
+  const copyDictionaryText = async (text: string, label: string) => {
+    if (!navigator.clipboard?.writeText) {
+      showPanelNotice('Clipboard copy unavailable');
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(text);
+      showPanelNotice(`${label} copied`);
+    } catch {
+      showPanelNotice('Clipboard copy blocked');
+    }
   };
 
   return (
@@ -215,13 +257,40 @@ export function DictionaryPanel({
             <button
               key={item}
               type="button"
-              onClick={() => onQueryChange(item)}
+              onClick={() => chooseQuery(item)}
               className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600 transition hover:bg-indigo-50 hover:text-indigo-700"
             >
               {item}
             </button>
           ))}
         </div>
+        {recentQueries.length ? (
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <span className="text-xs font-semibold text-slate-400">
+              Recent
+            </span>
+            {recentQueries.map((item) => (
+              <button
+                key={item}
+                type="button"
+                onClick={() => chooseQuery(item)}
+                className="max-w-44 truncate rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-600 transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700"
+                title={item}
+              >
+                {item}
+              </button>
+            ))}
+          </div>
+        ) : null}
+        {panelNotice ? (
+          <div
+            role="status"
+            aria-live="polite"
+            className="mt-3 inline-flex rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700"
+          >
+            {panelNotice}
+          </div>
+        ) : null}
       </section>
 
       {hasQuery ? (
@@ -239,6 +308,7 @@ export function DictionaryPanel({
                 query={query}
                 onStudy={onStudy}
                 onConvert={onConvert}
+                onCopy={copyDictionaryText}
               />
             ))
           ) : isLoading ? null : (
@@ -274,11 +344,13 @@ function DictionaryResultCard({
   query,
   onStudy,
   onConvert,
+  onCopy,
 }: {
   result: DictionarySearchResult;
   query: string;
   onStudy: (uly: string) => void;
   onConvert: (uey: string) => void;
+  onCopy: (text: string, label: string) => void;
 }) {
   const { entry } = result;
   const [showAllDefinitions, setShowAllDefinitions] = useState(false);
@@ -326,6 +398,22 @@ function DictionaryResultCard({
         </div>
 
         <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={() => onCopy(entry.uey, 'UEY')}
+            className="inline-flex items-center gap-2 rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+          >
+            <Copy className="h-4 w-4" aria-hidden="true" />
+            Copy UEY
+          </button>
+          <button
+            type="button"
+            onClick={() => onCopy(entry.uly, 'ULY')}
+            className="inline-flex items-center gap-2 rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+          >
+            <Copy className="h-4 w-4" aria-hidden="true" />
+            Copy ULY
+          </button>
           <button
             type="button"
             onClick={() => onStudy(entry.uly)}
@@ -401,6 +489,40 @@ function DictionaryResultCard({
       ) : null}
     </article>
   );
+}
+
+function loadRecentDictionaryQueries() {
+  if (typeof window === 'undefined') return [];
+
+  try {
+    const parsed = JSON.parse(
+      window.localStorage.getItem(RECENT_QUERY_STORAGE_KEY) ?? '[]',
+    );
+    if (!Array.isArray(parsed)) return [];
+    return parsed
+      .filter((value): value is string => typeof value === 'string')
+      .map((value) => value.trim())
+      .filter(Boolean)
+      .slice(0, MAX_RECENT_QUERIES);
+  } catch {
+    return [];
+  }
+}
+
+function saveRecentDictionaryQuery(query: string) {
+  const normalizedQuery = query.trim();
+  if (!normalizedQuery) return loadRecentDictionaryQueries();
+
+  const key = normalizedQuery.toLocaleLowerCase();
+  const next = [
+    normalizedQuery,
+    ...loadRecentDictionaryQueries().filter(
+      (item) => item.toLocaleLowerCase() !== key,
+    ),
+  ].slice(0, MAX_RECENT_QUERIES);
+
+  window.localStorage.setItem(RECENT_QUERY_STORAGE_KEY, JSON.stringify(next));
+  return next;
 }
 
 function getVisibleDefinitions(

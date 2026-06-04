@@ -1,0 +1,163 @@
+import { spawn } from 'node:child_process';
+import { createConnection } from 'node:net';
+import { join } from 'node:path';
+
+const HOST = '127.0.0.1';
+const PORT = 4173;
+const BASE_URL = `http://${HOST}:${PORT}`;
+const SERVER_TIMEOUT_MS = 15000;
+const PROBE_TIMEOUT_MS = 500;
+
+const checks = [
+  {
+    name: 'home loads',
+    path: '/',
+    waitScript:
+      "document.body && document.body.textContent.includes('UG Bridge') && document.querySelector('#dictionary-search')",
+    expected: ['UG Bridge', 'Dictionary search'],
+  },
+  {
+    name: 'converter restores shared text',
+    path: '/?view=convert&d=uly-to-uey&text=salam',
+    waitScript: "document.body && document.body.textContent.includes('سالام')",
+    expected: ['salam', 'سالام'],
+  },
+  {
+    name: 'dictionary search renders results',
+    path: '/?view=dictionary&q=yaxshi',
+    waitScript: "document.body && document.body.textContent.includes('ياخشى')",
+    expected: ['Dictionary search', 'ياخشى', 'yaxshi'],
+  },
+];
+
+const viteBin = join(
+  process.cwd(),
+  'node_modules',
+  '.bin',
+  process.platform === 'win32' ? 'vite.cmd' : 'vite',
+);
+
+const server = spawn(
+  viteBin,
+  ['--host', HOST, '--port', String(PORT), '--strictPort'],
+  {
+    cwd: process.cwd(),
+    env: process.env,
+    stdio: ['ignore', 'pipe', 'pipe'],
+  },
+);
+
+let serverOutput = '';
+server.stdout.on('data', (chunk) => {
+  serverOutput += chunk.toString();
+});
+server.stderr.on('data', (chunk) => {
+  serverOutput += chunk.toString();
+});
+
+try {
+  await waitForServer();
+
+  for (const check of checks) {
+    const dump = await lightpandaFetch(check);
+    for (const expected of check.expected) {
+      if (!dump.includes(expected)) {
+        throw new Error(`${check.name}: missing "${expected}"`);
+      }
+    }
+    console.log(`✓ ${check.name}`);
+  }
+} finally {
+  server.kill('SIGTERM');
+}
+
+async function waitForServer() {
+  const startedAt = Date.now();
+
+  while (Date.now() - startedAt < SERVER_TIMEOUT_MS) {
+    if (server.exitCode !== null) {
+      throw new Error(`Vite server exited early:\n${serverOutput}`);
+    }
+
+    if (await canConnectToServer()) {
+      return;
+    } else {
+      // Keep waiting until Vite accepts connections.
+    }
+
+    await delay(250);
+  }
+
+  throw new Error(`Timed out waiting for Vite server:\n${serverOutput}`);
+}
+
+function canConnectToServer() {
+  return new Promise((resolve) => {
+    const socket = createConnection({ host: HOST, port: PORT });
+    socket.setTimeout(PROBE_TIMEOUT_MS);
+    socket.on('connect', () => {
+      socket.destroy();
+      resolve(true);
+    });
+    socket.on('timeout', () => {
+      socket.destroy();
+      resolve(false);
+    });
+    socket.on('error', () => {
+      resolve(false);
+    });
+  });
+}
+
+function lightpandaFetch(check) {
+  return new Promise((resolve, reject) => {
+    const child = spawn(
+      'lightpanda',
+      [
+        'fetch',
+        `${BASE_URL}${check.path}`,
+        '--dump',
+        'semantic_tree_text',
+        '--wait-ms',
+        '10000',
+        '--wait-script',
+        check.waitScript,
+        '--terminate-ms',
+        '15000',
+      ],
+      {
+        cwd: process.cwd(),
+        env: process.env,
+        stdio: ['ignore', 'pipe', 'pipe'],
+      },
+    );
+
+    let stdout = '';
+    let stderr = '';
+    child.stdout.on('data', (chunk) => {
+      stdout += chunk.toString();
+    });
+    child.stderr.on('data', (chunk) => {
+      stderr += chunk.toString();
+    });
+    child.on('error', reject);
+    child.on('close', (code) => {
+      if (code === 0) {
+        resolve(stdout);
+        return;
+      }
+
+      reject(
+        new Error(
+          `${check.name}: lightpanda exited ${code}\n${stderr || stdout}`,
+        ),
+      );
+    });
+  });
+}
+
+function delay(ms) {
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
+}

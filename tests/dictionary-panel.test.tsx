@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { DictionaryPanel } from '../src/components/DictionaryPanel';
 import type {
@@ -35,6 +35,13 @@ const salamEntry: DictionaryEntry = {
 
 describe('DictionaryPanel', () => {
   beforeEach(() => {
+    window.localStorage.clear();
+    Object.defineProperty(navigator, 'clipboard', {
+      configurable: true,
+      value: {
+        writeText: vi.fn().mockResolvedValue(undefined),
+      },
+    });
     useDictionaryLookupMock.mockReset();
     setLookupState();
   });
@@ -99,6 +106,38 @@ describe('DictionaryPanel', () => {
 
     expect(onStudy).toHaveBeenCalledWith('yaxshi');
     expect(onConvert).toHaveBeenCalledWith('ياخشى');
+  });
+
+  it('copies result headwords from the result card', async () => {
+    const result: DictionarySearchResult = {
+      entry: yaxshiEntry,
+      score: 0,
+      matchedOn: 'definition',
+      matchedText: 'good',
+    };
+    setLookupState({ results: [result] });
+    renderPanel({ query: 'good' });
+    const card = screen.getByRole('article');
+
+    await act(async () => {
+      fireEvent.click(within(card).getByRole('button', { name: 'Copy ULY' }));
+    });
+
+    expect(navigator.clipboard.writeText).toHaveBeenCalledWith('yaxshi');
+    expect(screen.getByText('ULY copied')).toBeInTheDocument();
+  });
+
+  it('shows saved recent searches and reuses them', () => {
+    window.localStorage.setItem(
+      'ugbridge.dictionary.recent.v1',
+      JSON.stringify(['kitab', 'alma']),
+    );
+    const { onQueryChange } = renderPanel();
+
+    expect(screen.getByText('Recent')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'kitab' }));
+
+    expect(onQueryChange).toHaveBeenCalledWith('kitab');
   });
 
   it('highlights matched fragments in visible result text', () => {

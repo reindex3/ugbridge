@@ -51,7 +51,8 @@
   word-initial hamza behavior, and Uyghur letter forms.
 - **Search offline dictionary data** from the home page or dictionary view by
   UEY, ULY, or English with suggestions, matched-text highlighting,
-  cross-script fallbacks, and lazy-loaded static shards.
+  cross-script fallbacks, recent searches, copy actions, and lazy-loaded static
+  shards.
 - **Study and practice UEY** through vowel-highlighted letter breakdowns,
   alphabet pages, browser-shaped highlighted examples, connected joining-form
   samples, letter progress, and a quiz covering all 32 sounds.
@@ -87,6 +88,7 @@ npm test                 # run unit tests once
 npm run test:watch       # watch tests
 npm run typecheck        # TypeScript check
 npm run build            # production build in dist/
+npm run smoke:lightpanda # Lightpanda smoke check for core browser flows
 npm run preview          # preview production build
 npm run deploy           # build + deploy to Firebase Hosting
 npm run dictionary:build # rebuild generated dictionary shards
@@ -300,13 +302,16 @@ alphabet data and connected form samples, dictionary search, cross-script
 fallbacks, retryable shard loading, dictionary panel interactions, app
 conversion workflows, text input/output controls, custom transliterations,
 history, learning progress, speech controls, and TTS settings.
-Real-browser smoke checks are useful for deployed workflows and responsive
-navigation, especially clipboard, dictionary shard fetches, and mobile tab fit.
+Lightpanda smoke checks cover the homepage, shared conversion URLs, and
+dictionary result rendering in a lightweight browser runtime. Real-browser
+smoke checks are still useful for responsive navigation, especially clipboard,
+dictionary shard fetches, and mobile tab fit.
 
 ```bash
 npm test
 npm run typecheck
 npm run build
+npm run smoke:lightpanda
 ```
 
 ## License
