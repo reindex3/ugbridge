@@ -69,6 +69,12 @@ describe('ueyToUly', () => {
       expect(ueyToUly('مۇئەللىم')).toBe("mu'ellim");
       expect(ueyToUly('ئالما سائەت')).toBe("alma sa'et");
     });
+
+    it('keeps in-word hamza across punctuation and spaces', () => {
+      expect(ueyToUly('سائەت، مۇئەللىم؟ Hello')).toBe(
+        "sa'et, mu'ellim? Hello",
+      );
+    });
   });
 
   describe('common words', () => {

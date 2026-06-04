@@ -100,6 +100,91 @@ describe('DictionaryPanel', () => {
     expect(onStudy).toHaveBeenCalledWith('yaxshi');
     expect(onConvert).toHaveBeenCalledWith('ياخشى');
   });
+
+  it('highlights matched fragments in visible result text', () => {
+    const result: DictionarySearchResult = {
+      entry: {
+        ...yaxshiEntry,
+        definitions: [
+          'fine',
+          'well',
+          'nice',
+          'ok',
+          'solid',
+          'very good',
+          'excellent',
+        ],
+      },
+      score: 0,
+      matchedOn: 'definition',
+      matchedText: 'very good',
+    };
+    setLookupState({ results: [result] });
+
+    renderPanel({ query: 'good' });
+
+    const highlight = screen.getByText('good');
+    expect(highlight.tagName).toBe('MARK');
+    expect(screen.getByText(/Show 1 more definition/)).toBeInTheDocument();
+  });
+
+  it('highlights converted ULY headword matches from UEY queries', () => {
+    const result: DictionarySearchResult = {
+      entry: yaxshiEntry,
+      score: 0,
+      matchedOn: 'uly',
+      matchedText: 'yaxshi',
+    };
+    setLookupState({ results: [result] });
+
+    renderPanel({ query: 'ياخشى' });
+
+    const highlight = screen.getByText('yaxshi');
+    expect(highlight.tagName).toBe('MARK');
+  });
+
+  it('highlights converted UEY headword matches from ULY queries', () => {
+    const result: DictionarySearchResult = {
+      entry: yaxshiEntry,
+      score: 0,
+      matchedOn: 'uey',
+      matchedText: 'ياخشى',
+    };
+    setLookupState({ results: [result] });
+
+    renderPanel({ query: 'yaxshi' });
+
+    const highlight = screen.getAllByText('ياخشى').find(
+      (element) => element.tagName === 'MARK',
+    );
+    expect(highlight?.tagName).toBe('MARK');
+  });
+
+  it('highlights example text matches', () => {
+    const result: DictionarySearchResult = {
+      entry: {
+        ...salamEntry,
+        examples: [
+          {
+            uey: 'مەن سالام دەيمەن',
+            uly: 'men salam deymen',
+            english: 'I say hello',
+          },
+        ],
+      },
+      score: 0,
+      matchedOn: 'example',
+      matchedText: 'I say hello',
+    };
+    setLookupState({ results: [result] });
+
+    renderPanel({ query: 'hello' });
+
+    const highlight = screen.getAllByText('hello').find(
+      (element) => element.tagName === 'MARK',
+    );
+    expect(highlight).toBeDefined();
+  });
 });
 
 function renderPanel({ query = '' }: { query?: string } = {}) {

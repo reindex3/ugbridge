@@ -115,6 +115,41 @@ describe('App conversion workflow', () => {
     );
   });
 
+  it('shows feedback when copying converted text is blocked', async () => {
+    Object.defineProperty(navigator, 'clipboard', {
+      configurable: true,
+      value: {
+        writeText: vi.fn().mockRejectedValue(new Error('blocked')),
+      },
+    });
+    window.history.pushState({}, '', '/?view=convert');
+    render(<App />);
+
+    fireEvent.change(getConversionInput(), {
+      target: { value: 'سالام' },
+    });
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Copy ULY' }));
+    });
+
+    expect(screen.getByText('Clipboard copy blocked')).toBeInTheDocument();
+  });
+
+  it('shows feedback when clipboard copy is unavailable', async () => {
+    Object.defineProperty(navigator, 'clipboard', {
+      configurable: true,
+      value: undefined,
+    });
+    window.history.pushState({}, '', '/?view=convert');
+    render(<App />);
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Share' }));
+    });
+
+    expect(screen.getByText('Clipboard copy unavailable')).toBeInTheDocument();
+  });
+
   it('uses the current output as the new input when swapping direction', () => {
     window.history.pushState({}, '', '/?view=convert');
     render(<App />);
@@ -135,6 +170,7 @@ describe('App conversion workflow', () => {
         name: /Currently ULY to UEY/i,
       }),
     ).toBeInTheDocument();
+    expect(screen.getByText('Direction swapped')).toBeInTheDocument();
   });
 
   it('cycles theme mode with a single slider control', () => {

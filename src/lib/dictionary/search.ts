@@ -1,4 +1,4 @@
-import { ueyToUly } from '../converter';
+import { ueyToUly, ulyToUey } from '../converter';
 import { DICTIONARY_ENTRIES, type DictionaryEntry } from './entries';
 import {
   normalizeDictionarySearchMode,
@@ -13,6 +13,7 @@ export interface DictionarySearchResult {
 }
 
 const MAX_RESULTS = 12;
+const ULY_HINT_RE = /(?:gh|ng|sh|ch|zh|[éëöü'’‘ʼ])/i;
 
 export function searchDictionary(
   query: string,
@@ -24,8 +25,14 @@ export function searchDictionary(
 
   const searchMode = normalizeDictionarySearchMode(mode);
   const queryAsUly = normalizeQuery(ueyToUly(query));
+  const queryAsUey =
+    searchMode === 'uey' || ULY_HINT_RE.test(query)
+      ? normalizeQuery(ulyToUey(query))
+      : '';
   const results = entries
-    .map((entry) => rankEntry(entry, normalized, queryAsUly, searchMode))
+    .map((entry) =>
+      rankEntry(entry, normalized, queryAsUly, queryAsUey, searchMode),
+    )
     .filter((result): result is DictionarySearchResult => result !== null)
     .sort((a, b) => a.score - b.score || a.entry.uly.localeCompare(b.entry.uly));
 
@@ -36,6 +43,7 @@ function rankEntry(
   entry: DictionaryEntry,
   normalized: string,
   queryAsUly: string,
+  queryAsUey: string,
   mode: DictionarySearchMode,
 ): DictionarySearchResult | null {
   const uly = normalizeQuery(entry.uly);
@@ -60,7 +68,7 @@ function rankEntry(
   if (
     mode !== 'english' &&
     mode !== 'uey' &&
-    (uly === normalized || uly === queryAsUly)
+    matchesQuery(uly, normalized, queryAsUly)
   ) {
     return {
       entry,
@@ -69,7 +77,11 @@ function rankEntry(
       matchedText: entry.uly,
     };
   }
-  if (mode !== 'english' && mode !== 'uly' && uey === normalized) {
+  if (
+    mode !== 'english' &&
+    mode !== 'uly' &&
+    matchesQuery(uey, normalized, queryAsUey)
+  ) {
     return {
       entry,
       score: definitionPenalty,
@@ -88,7 +100,7 @@ function rankEntry(
   if (
     mode !== 'english' &&
     mode !== 'uey' &&
-    (uly.startsWith(normalized) || uly.startsWith(queryAsUly))
+    startsWithQuery(uly, normalized, queryAsUly)
   ) {
     return {
       entry,
@@ -97,7 +109,11 @@ function rankEntry(
       matchedText: entry.uly,
     };
   }
-  if (mode !== 'english' && mode !== 'uly' && uey.startsWith(normalized)) {
+  if (
+    mode !== 'english' &&
+    mode !== 'uly' &&
+    startsWithQuery(uey, normalized, queryAsUey)
+  ) {
     return {
       entry,
       score: 2 + definitionPenalty,
@@ -116,7 +132,7 @@ function rankEntry(
   if (
     mode !== 'english' &&
     mode !== 'uey' &&
-    (uly.includes(normalized) || uly.includes(queryAsUly))
+    includesQuery(uly, normalized, queryAsUly)
   ) {
     return {
       entry,
@@ -125,7 +141,11 @@ function rankEntry(
       matchedText: entry.uly,
     };
   }
-  if (mode !== 'english' && mode !== 'uly' && uey.includes(normalized)) {
+  if (
+    mode !== 'english' &&
+    mode !== 'uly' &&
+    includesQuery(uey, normalized, queryAsUey)
+  ) {
     return {
       entry,
       score: 4 + definitionPenalty,
@@ -151,6 +171,24 @@ function rankEntry(
   }
 
   return null;
+}
+
+function matchesQuery(value: string, normalized: string, fallback: string) {
+  return value === normalized || Boolean(fallback && value === fallback);
+}
+
+function startsWithQuery(value: string, normalized: string, fallback: string) {
+  return (
+    value.startsWith(normalized) ||
+    Boolean(fallback && value.startsWith(fallback))
+  );
+}
+
+function includesQuery(value: string, normalized: string, fallback: string) {
+  return (
+    value.includes(normalized) ||
+    Boolean(fallback && value.includes(fallback))
+  );
 }
 
 function normalizeQuery(value: string): string {

@@ -1,4 +1,4 @@
-import { ueyToUly } from '../converter';
+import { ueyToUly, ulyToUey } from '../converter';
 import type { DictionaryEntry } from './entries';
 import {
   normalizeDictionarySearchMode,
@@ -31,6 +31,7 @@ export interface StaticDictionaryLoadResult {
 
 const MANIFEST_URL = '/dictionary/manifest.json';
 const UEY_RE = /[\u0600-\u06ff]/;
+const ULY_HINT_RE = /(?:gh|ng|sh|ch|zh|[éëöü'’‘ʼ])/i;
 const shardCache = new Map<string, Promise<DictionaryEntry[]>>();
 let manifestPromise: Promise<DictionaryManifest | null> | null = null;
 
@@ -86,24 +87,32 @@ function getShardFiles(
   const buckets = new Set<string>();
   const normalized = normalizeQuery(query);
   const queryAsUly = normalizeQuery(ueyToUly(query));
+  const queryAsUey = ulyToUey(query);
   const hasUey = UEY_RE.test(query);
+  const hasUlyHint = ULY_HINT_RE.test(query);
+
+  const addShard = (
+    family: 'english' | 'uly' | 'uey',
+    bucket: string,
+  ) => {
+    const shard = manifest.shards[family][bucket];
+    if (shard) buckets.add(shard.file);
+  };
 
   if (searchMode === 'english' || (searchMode === 'auto' && !hasUey)) {
-    const bucket = bucketForLatin(normalized);
-    const shard = manifest.shards.english[bucket];
-    if (shard) buckets.add(shard.file);
+    addShard('english', bucketForLatin(normalized));
   }
 
-  if (searchMode === 'uly' || (searchMode === 'auto' && !hasUey)) {
-    const bucket = bucketForLatin(queryAsUly);
-    const shard = manifest.shards.uly[bucket];
-    if (shard) buckets.add(shard.file);
+  if (searchMode === 'uly' || searchMode === 'auto') {
+    if (!hasUey || queryAsUly) addShard('uly', bucketForLatin(queryAsUly));
   }
 
-  if (searchMode === 'uey' || (searchMode === 'auto' && hasUey)) {
-    const bucket = bucketForUey(query);
-    const shard = manifest.shards.uey[bucket];
-    if (shard) buckets.add(shard.file);
+  if (
+    searchMode === 'uey' ||
+    (searchMode === 'auto' && (hasUey || hasUlyHint))
+  ) {
+    const ueyQuery = hasUey ? query : queryAsUey;
+    if (ueyQuery) addShard('uey', bucketForUey(ueyQuery));
   }
 
   return [...buckets];

@@ -45,7 +45,7 @@ describe('searchDictionary', () => {
     const [result] = searchDictionary('ياخشى', undefined, 'uey');
     expect(result.entry.uly).toBe('yaxshi');
     expect(result.matchedOn).toBe('uey');
-    expect(searchDictionary('yaxshi', undefined, 'uey')).toEqual([]);
+    expect(searchDictionary('good', undefined, 'uey')).toEqual([]);
   });
 
   it('can limit search to ULY headwords', () => {
@@ -53,6 +53,18 @@ describe('searchDictionary', () => {
     expect(result.entry.uey).toBe('ياخشى');
     expect(result.matchedOn).toBe('uly');
     expect(searchDictionary('good', undefined, 'uly')).toEqual([]);
+  });
+
+  it('tries converted UEY text when searching UEY mode with ULY input', () => {
+    const [result] = searchDictionary('yaxshi', undefined, 'uey');
+    expect(result.entry.uey).toBe('ياخشى');
+    expect(result.matchedOn).toBe('uey');
+  });
+
+  it('tries converted ULY text when searching ULY mode with UEY input', () => {
+    const [result] = searchDictionary('ياخشى', undefined, 'uly');
+    expect(result.entry.uly).toBe('yaxshi');
+    expect(result.matchedOn).toBe('uly');
   });
 
   it('ranks exact and compact matches before broad noisy matches', () => {
@@ -144,7 +156,7 @@ describe('suggestDictionary', () => {
     const [suggestion] = suggestDictionary('يا', undefined, 'uey');
     expect(suggestion.value).toBe('ياخشى');
     expect(suggestion.matchedOn).toBe('uey');
-    expect(suggestDictionary('ya', undefined, 'uey')).toEqual([]);
+    expect(suggestDictionary('ya', undefined, 'uey')[0].value).toBe('ياخشى');
   });
 
   it('can limit suggestions to ULY headwords', () => {
@@ -160,7 +172,7 @@ describe('loadStaticDictionaryEntries', () => {
     vi.unstubAllGlobals();
   });
 
-  it('loads only UEY shards for Arabic auto queries', async () => {
+  it('loads UEY and converted ULY shards for Arabic auto queries', async () => {
     const { loadStaticDictionaryEntries } = await importStaticDictionary();
     const fetchMock = vi.fn(async (url: string) => {
       if (url === '/dictionary/manifest.json') {
@@ -175,14 +187,14 @@ describe('loadStaticDictionaryEntries', () => {
     const result = await loadStaticDictionaryEntries('ياخشى', 'auto');
 
     expect(result.entries[0].uly).toBe('yaxshi');
-    expect(result.loadedShardCount).toBe(1);
+    expect(result.loadedShardCount).toBe(2);
     expect(fetchMock).toHaveBeenCalledWith('/dictionary/manifest.json');
     expect(fetchMock).toHaveBeenCalledWith('/dictionary/shards/uey-64a.json');
+    expect(fetchMock).toHaveBeenCalledWith('/dictionary/shards/uly-y.json');
     expect(fetchMock).not.toHaveBeenCalledWith('/dictionary/shards/english-other.json');
-    expect(fetchMock).not.toHaveBeenCalledWith('/dictionary/shards/uly-y.json');
   });
 
-  it('loads English and ULY shards for Latin auto queries and dedupes overlap', async () => {
+  it('loads English, ULY, and hinted UEY shards for Latin auto queries', async () => {
     const { loadStaticDictionaryEntries } = await importStaticDictionary();
     const fetchMock = vi.fn(async (url: string) => {
       if (url === '/dictionary/manifest.json') {
@@ -204,9 +216,68 @@ describe('loadStaticDictionaryEntries', () => {
     const result = await loadStaticDictionaryEntries('élik', 'auto');
 
     expect(result.entries.map((entry) => entry.uly)).toEqual(['élik', 'ellik']);
+    expect(result.loadedShardCount).toBe(3);
+    expect(fetchMock).toHaveBeenCalledWith('/dictionary/shards/english-e.json');
+    expect(fetchMock).toHaveBeenCalledWith('/dictionary/shards/uly-e.json');
+    expect(fetchMock).toHaveBeenCalledWith('/dictionary/shards/uey-626.json');
+  });
+
+  it('does not load UEY shards for plain English auto queries', async () => {
+    const { loadStaticDictionaryEntries } = await importStaticDictionary();
+    const fetchMock = vi.fn(async (url: string) => {
+      if (url === '/dictionary/manifest.json') {
+        return jsonResponse(testManifest());
+      }
+
+      return jsonResponse([['ئاسان', 'asan', ['easy']]]);
+    });
+
+    vi.stubGlobal('fetch', fetchMock);
+
+    const result = await loadStaticDictionaryEntries('easy', 'auto');
+
     expect(result.loadedShardCount).toBe(2);
     expect(fetchMock).toHaveBeenCalledWith('/dictionary/shards/english-e.json');
     expect(fetchMock).toHaveBeenCalledWith('/dictionary/shards/uly-e.json');
+    expect(fetchMock).not.toHaveBeenCalledWith('/dictionary/shards/uey-626.json');
+    expect(fetchMock).not.toHaveBeenCalledWith('/dictionary/shards/uey-64a.json');
+  });
+
+  it('loads converted UEY shards for ULY input in UEY mode', async () => {
+    const { loadStaticDictionaryEntries } = await importStaticDictionary();
+    const fetchMock = vi.fn(async (url: string) => {
+      if (url === '/dictionary/manifest.json') {
+        return jsonResponse(testManifest());
+      }
+
+      return jsonResponse([['ياخشى', 'yaxshi', ['good']]]);
+    });
+
+    vi.stubGlobal('fetch', fetchMock);
+
+    const result = await loadStaticDictionaryEntries('yaxshi', 'uey');
+
+    expect(result.loadedShardCount).toBe(1);
+    expect(fetchMock).toHaveBeenCalledWith('/dictionary/shards/uey-64a.json');
+    expect(fetchMock).not.toHaveBeenCalledWith('/dictionary/shards/uly-y.json');
+  });
+
+  it('loads converted ULY shards for UEY input in ULY mode', async () => {
+    const { loadStaticDictionaryEntries } = await importStaticDictionary();
+    const fetchMock = vi.fn(async (url: string) => {
+      if (url === '/dictionary/manifest.json') {
+        return jsonResponse(testManifest());
+      }
+
+      return jsonResponse([['ياخشى', 'yaxshi', ['good']]]);
+    });
+
+    vi.stubGlobal('fetch', fetchMock);
+
+    const result = await loadStaticDictionaryEntries('ياخشى', 'uly');
+
+    expect(result.loadedShardCount).toBe(1);
+    expect(fetchMock).toHaveBeenCalledWith('/dictionary/shards/uly-y.json');
     expect(fetchMock).not.toHaveBeenCalledWith('/dictionary/shards/uey-64a.json');
   });
 
@@ -296,7 +367,7 @@ describe('loadStaticDictionaryEntries', () => {
       loadedShardCount: 0,
     });
 
-    const result = await loadStaticDictionaryEntries('ياخشى', 'auto');
+    const result = await loadStaticDictionaryEntries('ياخشى', 'uey');
 
     expect(result.entries[0].uly).toBe('yaxshi');
     expect(fetchMock).toHaveBeenCalledWith('/dictionary/manifest.json');
@@ -328,11 +399,11 @@ describe('loadStaticDictionaryEntries', () => {
 
     vi.stubGlobal('fetch', fetchMock);
 
-    await expect(loadStaticDictionaryEntries('ياخشى', 'auto')).rejects.toThrow(
+    await expect(loadStaticDictionaryEntries('ياخشى', 'uey')).rejects.toThrow(
       'Dictionary shard 503',
     );
 
-    const result = await loadStaticDictionaryEntries('ياخشى', 'auto');
+    const result = await loadStaticDictionaryEntries('ياخشى', 'uey');
 
     expect(result.entries[0].uly).toBe('yaxshi');
     expect(
@@ -354,8 +425,8 @@ describe('loadStaticDictionaryEntries', () => {
 
     vi.stubGlobal('fetch', fetchMock);
 
-    await loadStaticDictionaryEntries('ياخشى', 'auto');
-    await loadStaticDictionaryEntries('ياخشى', 'auto');
+    await loadStaticDictionaryEntries('ياخشى', 'uey');
+    await loadStaticDictionaryEntries('ياخشى', 'uey');
 
     expect(fetchMock).toHaveBeenCalledTimes(2);
     expect(fetchMock).toHaveBeenCalledWith('/dictionary/manifest.json');
@@ -386,7 +457,10 @@ function testManifest() {
         e: { file: 'shards/uly-e.json', count: 2 },
         y: { file: 'shards/uly-y.json', count: 1 },
       },
-      uey: { '64a': { file: 'shards/uey-64a.json', count: 1 } },
+      uey: {
+        '626': { file: 'shards/uey-626.json', count: 1 },
+        '64a': { file: 'shards/uey-64a.json', count: 1 },
+      },
     },
   };
 }

@@ -50,7 +50,8 @@
 - **Inspect the letter bridge** from ULY to UEY, including per-segment mapping,
   word-initial hamza behavior, and Uyghur letter forms.
 - **Search offline dictionary data** from the home page or dictionary view by
-  UEY, ULY, or English with suggestions and lazy-loaded static shards.
+  UEY, ULY, or English with suggestions, matched-text highlighting,
+  cross-script fallbacks, and lazy-loaded static shards.
 - **Study and practice UEY** through vowel-highlighted letter breakdowns,
   alphabet pages, browser-shaped highlighted examples, connected joining-form
   samples, letter progress, and a quiz covering all 32 sounds.
@@ -295,10 +296,10 @@ configured in [.firebaserc](.firebaserc).
 ## Testing
 
 The test suite covers converter behavior, round-trip expectations, IPA hints,
-alphabet data and connected form samples, dictionary search and retryable shard
-loading, dictionary panel interactions, app conversion workflows, text
-input/output controls, custom transliterations, history, learning progress,
-speech controls, and TTS settings.
+alphabet data and connected form samples, dictionary search, cross-script
+fallbacks, retryable shard loading, dictionary panel interactions, app
+conversion workflows, text input/output controls, custom transliterations,
+history, learning progress, speech controls, and TTS settings.
 Real-browser smoke checks are useful for deployed workflows and responsive
 navigation, especially clipboard, dictionary shard fetches, and mobile tab fit.
 

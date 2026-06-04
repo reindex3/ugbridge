@@ -63,6 +63,12 @@ describe('ulyToUey', () => {
       expect(ulyToUey('sa’et')).toBe('سائەت');
     });
 
+    it('keeps apostrophe hamza behavior across punctuation and spaces', () => {
+      expect(ulyToUey("sa'et, mu'ellim? 5 alma")).toBe(
+        'سائەت، مۇئەللىم؟ 5 ئالما',
+      );
+    });
+
     it('does not prepend hamza when word starts with a consonant', () => {
       expect(ulyToUey('men')).toBe('مەن');
       expect(ulyToUey('bala')).toBe('بالا');
@@ -147,6 +153,10 @@ describe('ulyToUey', () => {
 
     it('passes through Arabic input unchanged (no double conversion)', () => {
       expect(ulyToUey('ئالما')).toBe('ئالما');
+    });
+
+    it('converts uppercase Latin spans beside punctuation', () => {
+      expect(ulyToUey('UG Bridge: yaxshi')).toBe('ئۇگ برىدگە: ياخشى');
     });
   });
 });

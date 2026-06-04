@@ -6,6 +6,7 @@ import {
   type DictionarySuggestion,
   type DictionarySearchResult,
 } from '../lib/dictionary';
+import { ueyToUly, ulyToUey } from '../lib/converter';
 import { useDictionaryLookup } from '../hooks/useDictionaryLookup';
 import { UlyInputHelper } from './UlyInputHelper';
 
@@ -235,6 +236,7 @@ export function DictionaryPanel({
               <DictionaryResultCard
                 key={result.entry.id}
                 result={result}
+                query={query}
                 onStudy={onStudy}
                 onConvert={onConvert}
               />
@@ -269,18 +271,22 @@ function getSearchModeLabel(mode: DictionarySearchMode) {
 
 function DictionaryResultCard({
   result,
+  query,
   onStudy,
   onConvert,
 }: {
   result: DictionarySearchResult;
+  query: string;
   onStudy: (uly: string) => void;
   onConvert: (uey: string) => void;
 }) {
   const { entry } = result;
   const [showAllDefinitions, setShowAllDefinitions] = useState(false);
-  const visibleDefinitions = showAllDefinitions
-    ? entry.definitions
-    : entry.definitions.slice(0, VISIBLE_DEFINITION_COUNT);
+  const visibleDefinitions = getVisibleDefinitions(
+    entry.definitions,
+    result,
+    showAllDefinitions,
+  );
   const hiddenDefinitionCount =
     entry.definitions.length - visibleDefinitions.length;
 
@@ -290,11 +296,17 @@ function DictionaryResultCard({
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-3">
             <h2 dir="rtl" lang="ug" className="text-4xl leading-relaxed text-slate-950">
-              {entry.uey}
+              <HighlightedText
+                text={entry.uey}
+                candidates={getHighlightCandidates(result, query, 'uey')}
+              />
             </h2>
             <div>
               <div className="font-mono text-lg font-semibold text-indigo-700">
-                {entry.uly}
+                <HighlightedText
+                  text={entry.uly}
+                  candidates={getHighlightCandidates(result, query, 'uly')}
+                />
               </div>
               {entry.ipa ? (
                 <div className="font-mono text-sm text-slate-500">
@@ -343,7 +355,10 @@ function DictionaryResultCard({
                 : 'bg-slate-50 ring-slate-200'
             }`}
           >
-            {definition}
+            <HighlightedText
+              text={definition}
+              candidates={getHighlightCandidates(result, query, 'definition')}
+            />
           </li>
         ))}
       </ol>
@@ -363,13 +378,22 @@ function DictionaryResultCard({
           {entry.examples.map((example) => (
             <div key={`${entry.id}-${example.uly}`} className="rounded-md bg-slate-50 p-3">
               <div dir="rtl" lang="ug" className="text-2xl text-slate-950">
-                {example.uey}
+                <HighlightedText
+                  text={example.uey}
+                  candidates={getExampleHighlightCandidates(result, query, 'uey')}
+                />
               </div>
               <div className="mt-1 font-mono text-sm font-semibold text-indigo-700">
-                {example.uly}
+                <HighlightedText
+                  text={example.uly}
+                  candidates={getExampleHighlightCandidates(result, query, 'uly')}
+                />
               </div>
               <div className="mt-1 text-sm text-slate-600">
-                {example.english}
+                <HighlightedText
+                  text={example.english}
+                  candidates={getExampleHighlightCandidates(result, query, 'english')}
+                />
               </div>
             </div>
           ))}
@@ -377,6 +401,112 @@ function DictionaryResultCard({
       ) : null}
     </article>
   );
+}
+
+function getVisibleDefinitions(
+  definitions: string[],
+  result: DictionarySearchResult,
+  showAllDefinitions: boolean,
+) {
+  if (showAllDefinitions || result.matchedOn !== 'definition') {
+    return showAllDefinitions
+      ? definitions
+      : definitions.slice(0, VISIBLE_DEFINITION_COUNT);
+  }
+
+  const visible = definitions.slice(0, VISIBLE_DEFINITION_COUNT);
+  if (visible.includes(result.matchedText)) return visible;
+
+  const matchedDefinition = definitions.find(
+    (definition) => definition === result.matchedText,
+  );
+  return matchedDefinition ? [...visible, matchedDefinition] : visible;
+}
+
+function HighlightedText({
+  text,
+  candidates,
+}: {
+  text: string;
+  candidates: string[];
+}) {
+  const range = findHighlightRange(text, candidates);
+  if (!range) return <>{text}</>;
+
+  const [start, end] = range;
+  return (
+    <>
+      {text.slice(0, start)}
+      <mark className="rounded-sm bg-amber-100 px-0.5 text-amber-950">
+        {text.slice(start, end)}
+      </mark>
+      {text.slice(end)}
+    </>
+  );
+}
+
+function getHighlightCandidates(
+  result: DictionarySearchResult,
+  query: string,
+  field: 'uey' | 'uly' | 'definition' | 'example',
+) {
+  const trimmedQuery = query.trim();
+  if (!trimmedQuery) return [];
+
+  if (field === 'uey' && result.matchedOn === 'uey') {
+    return uniqueCandidates([trimmedQuery, ulyToUey(trimmedQuery)]);
+  }
+
+  if (field === 'uly' && result.matchedOn === 'uly') {
+    return uniqueCandidates([trimmedQuery, ueyToUly(trimmedQuery)]);
+  }
+
+  if (field === 'definition' && result.matchedOn === 'definition') {
+    return uniqueCandidates([trimmedQuery]);
+  }
+
+  if (field === 'example' && result.matchedOn === 'example') {
+    return uniqueCandidates([trimmedQuery]);
+  }
+
+  return [];
+}
+
+function getExampleHighlightCandidates(
+  result: DictionarySearchResult,
+  query: string,
+  field: 'uey' | 'uly' | 'english',
+) {
+  const trimmedQuery = query.trim();
+  if (!trimmedQuery || result.matchedOn !== 'example') return [];
+
+  if (field === 'uey') {
+    return uniqueCandidates([trimmedQuery, ulyToUey(trimmedQuery)]);
+  }
+
+  if (field === 'uly') {
+    return uniqueCandidates([trimmedQuery, ueyToUly(trimmedQuery)]);
+  }
+
+  return uniqueCandidates([trimmedQuery]);
+}
+
+function uniqueCandidates(candidates: string[]) {
+  return [...new Set(candidates.map((candidate) => candidate.trim()))]
+    .filter(Boolean)
+    .sort((a, b) => b.length - a.length);
+}
+
+function findHighlightRange(text: string, candidates: string[]) {
+  const normalizedText = text.toLocaleLowerCase();
+
+  for (const candidate of candidates) {
+    const normalizedCandidate = candidate.toLocaleLowerCase();
+    const start = normalizedText.indexOf(normalizedCandidate);
+    if (start >= 0) return [start, start + candidate.length] as const;
+  }
+
+  return null;
 }
 
 function matchLabel(result: DictionarySearchResult) {

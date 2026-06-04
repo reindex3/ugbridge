@@ -170,6 +170,7 @@ export default function App() {
   const swap = () => {
     setInput(output);
     setDirection((d) => (d === 'uey-to-uly' ? 'uly-to-uey' : 'uey-to-uly'));
+    showNotice('Direction swapped');
   };
 
   const showNotice = (message: string) => {
@@ -225,11 +226,25 @@ export default function App() {
 
   const copyText = async (text: string, label: string) => {
     if (!text) return;
-    await navigator.clipboard.writeText(text);
-    showNotice(`${label} copied`);
+    if (!navigator.clipboard?.writeText) {
+      showNotice('Clipboard copy unavailable');
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(text);
+      showNotice(`${label} copied`);
+    } catch {
+      showNotice('Clipboard copy blocked');
+    }
   };
 
   const copyShareLink = async () => {
+    if (!navigator.clipboard?.writeText) {
+      showNotice('Clipboard copy unavailable');
+      return;
+    }
+
     const url = new URL(window.location.href);
     url.search = '';
     url.searchParams.set(
@@ -239,8 +254,12 @@ export default function App() {
     url.searchParams.set('d', activeDirection);
     if (input) url.searchParams.set('text', input);
     if (lookupQuery) url.searchParams.set('lookup', lookupQuery);
-    await navigator.clipboard.writeText(url.toString());
-    showNotice('Share link copied');
+    try {
+      await navigator.clipboard.writeText(url.toString());
+      showNotice('Share link copied');
+    } catch {
+      showNotice('Clipboard copy blocked');
+    }
   };
 
   const downloadOutput = () => {
@@ -499,7 +518,11 @@ export default function App() {
           qualityHints.length > 0) && (
           <div className="mb-4 flex flex-wrap items-center gap-2 text-xs">
             {notice && (
-              <span className="rounded-full bg-emerald-50 px-3 py-1 font-medium text-emerald-700">
+              <span
+                role="status"
+                aria-live="polite"
+                className="rounded-full bg-emerald-50 px-3 py-1 font-medium text-emerald-700"
+              >
                 {notice}
               </span>
             )}
