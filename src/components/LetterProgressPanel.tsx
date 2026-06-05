@@ -1,4 +1,3 @@
-import { useEffect, useState } from 'react';
 import { ALPHABET_STUDY_ENTRIES } from '../lib/converter';
 
 const DIGRAPH_ORDER = ['ch', 'sh', 'gh', 'ng', 'zh'];
@@ -59,24 +58,14 @@ const LESSON_GROUPS = [
   },
 ] as const;
 
-export function LetterProgressPanel() {
-  const [learnedTokens, setLearnedTokens] = useState<Set<string>>(
-    () => new Set(loadLearnedTokens()),
-  );
+export function LetterProgressPanel({
+  learnedTokens,
+  onToggleToken,
+}: {
+  learnedTokens: ReadonlySet<string>;
+  onToggleToken: (token: string) => void;
+}) {
   const learnedCount = learnedTokens.size;
-
-  useEffect(() => {
-    saveLearnedTokens([...learnedTokens]);
-  }, [learnedTokens]);
-
-  const toggleLearned = (token: string) => {
-    setLearnedTokens((current) => {
-      const next = new Set(current);
-      if (next.has(token)) next.delete(token);
-      else next.add(token);
-      return next;
-    });
-  };
 
   return (
     <section className="grid gap-4">
@@ -103,7 +92,7 @@ export function LetterProgressPanel() {
             description={group.description}
             tokens={group.tokens}
             learnedTokens={learnedTokens}
-            onToggle={toggleLearned}
+            onToggle={onToggleToken}
           />
         ))}
       </div>
@@ -170,7 +159,7 @@ function LessonGroup({
   );
 }
 
-function loadLearnedTokens() {
+export function loadLearnedTokens() {
   if (typeof window === 'undefined') return [];
   try {
     const raw = window.localStorage.getItem(LEARN_PROGRESS_KEY);
@@ -181,7 +170,7 @@ function loadLearnedTokens() {
   }
 }
 
-function saveLearnedTokens(tokens: readonly string[]) {
+export function saveLearnedTokens(tokens: readonly string[]) {
   if (typeof window === 'undefined') return;
   window.localStorage.setItem(
     LEARN_PROGRESS_KEY,

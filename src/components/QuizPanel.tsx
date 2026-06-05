@@ -16,7 +16,11 @@ import {
   saveQuizProgress,
   type QuizProgress,
 } from '../lib/local-profile';
-import { LetterProgressPanel } from './LetterProgressPanel';
+import {
+  LetterProgressPanel,
+  loadLearnedTokens,
+  saveLearnedTokens,
+} from './LetterProgressPanel';
 
 type QuizMode = 'sound' | 'shape';
 type QuizPhase = 'practice' | 'review' | 'summary';
@@ -59,7 +63,13 @@ export function QuizPanel() {
   const [score, setScore] = useState(0);
   const [savedProgress, setSavedProgress] =
     useState<QuizProgress>(loadQuizProgress);
-  const quizItems = useMemo(() => shuffleItems(buildQuizItems()), []);
+  const [learnedTokens, setLearnedTokens] = useState<Set<string>>(
+    () => new Set(loadLearnedTokens()),
+  );
+  const quizItems = useMemo(
+    () => shuffleItems(buildQuizItems(learnedTokens)),
+    [learnedTokens],
+  );
   const item =
     phase === 'review'
       ? reviewItems[reviewIndex]
@@ -85,6 +95,19 @@ export function QuizPanel() {
     setReviewNoticeOpen(false);
     setScore(0);
   }, [mode, quizItems]);
+
+  useEffect(() => {
+    saveLearnedTokens([...learnedTokens]);
+  }, [learnedTokens]);
+
+  const toggleLearnedToken = (token: string) => {
+    setLearnedTokens((current) => {
+      const next = new Set(current);
+      if (next.has(token)) next.delete(token);
+      else next.add(token);
+      return next;
+    });
+  };
 
   const correctAnswer = mode === 'sound' ? item.entry.token : item.form;
   const answered = Boolean(selectedAnswer);
@@ -179,7 +202,10 @@ export function QuizPanel() {
 
     return (
       <div className="grid gap-6">
-        <LetterProgressPanel />
+        <LetterProgressPanel
+          learnedTokens={learnedTokens}
+          onToggleToken={toggleLearnedToken}
+        />
         <QuizLocalProgressPanel
           progress={savedProgress}
           onReset={() => setSavedProgress(clearQuizProgress())}
@@ -228,7 +254,10 @@ export function QuizPanel() {
 
   return (
     <div className="grid gap-6">
-      <LetterProgressPanel />
+      <LetterProgressPanel
+        learnedTokens={learnedTokens}
+        onToggleToken={toggleLearnedToken}
+      />
       <QuizLocalProgressPanel
         progress={savedProgress}
         onReset={() => setSavedProgress(clearQuizProgress())}
@@ -240,8 +269,8 @@ export function QuizPanel() {
               Quick practice
             </h2>
             <p className="mt-1 text-sm leading-6 text-slate-500">
-              Practice every UEY letter in isolated, initial, medial, and final
-              presentation forms.
+              Practice marked learned letters in isolated, initial, medial, and
+              final presentation forms. Mark none to practice every UEY letter.
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
@@ -541,8 +570,14 @@ function QuizAnswerButton({
   );
 }
 
-function buildQuizItems(): QuizItem[] {
-  return ALPHABET_STUDY_ENTRIES.flatMap((entry) =>
+function buildQuizItems(learnedTokens: ReadonlySet<string>): QuizItem[] {
+  const entries = learnedTokens.size
+    ? ALPHABET_STUDY_ENTRIES.filter((entry) =>
+        learnedTokens.has(entry.token),
+      )
+    : ALPHABET_STUDY_ENTRIES;
+
+  return entries.flatMap((entry) =>
     QUIZ_FORMS.map((form) => ({
       entry,
       form,

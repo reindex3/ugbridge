@@ -55,7 +55,8 @@
   and lazy-loaded static shards.
 - **Study and practice UEY** through vowel-highlighted letter breakdowns,
   alphabet pages, browser-shaped highlighted examples, connected joining-form
-  samples, letter progress, and local quiz progress covering all 32 sounds.
+  samples, letter progress, and local quiz progress that can focus on learned
+  letters or fall back to all 32 sounds.
 - **Customize local workflows** with browser-local custom words, recent
   conversions, ULY input helpers, a privacy-first local study profile with JSON
   export/import and no retained backend profile data, system/day/night theme

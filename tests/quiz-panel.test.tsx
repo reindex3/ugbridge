@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { QuizPanel } from '../src/components/QuizPanel';
+import { ALPHABET_STUDY_ENTRIES } from '../src/lib/converter';
 
 const LEARN_PROGRESS_KEY = 'ugbridge.learnedLetters.v1';
 const QUIZ_PROGRESS_KEY = 'ugbridge.quiz.progress.v1';
@@ -24,6 +25,9 @@ describe('QuizPanel', () => {
       progressHeading.compareDocumentPosition(practiceHeading) &
         Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy();
+    expect(
+      screen.getByText(`${ALPHABET_STUDY_ENTRIES.length * 4} forms · Score 0`),
+    ).toBeInTheDocument();
   });
 
   it('ignores unknown tokens restored from local learning progress', () => {
@@ -37,6 +41,7 @@ describe('QuizPanel', () => {
     expect(screen.getByText('2/32 marked learned')).toBeInTheDocument();
     expect(screen.getByText('1/8')).toBeInTheDocument();
     expect(screen.getByText('1/5')).toBeInTheDocument();
+    expect(screen.getByText('8 forms · Score 0')).toBeInTheDocument();
   });
 
   it('shows saved local quiz progress', () => {
