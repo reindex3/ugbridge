@@ -90,6 +90,18 @@ describe('DictionaryPanel', () => {
     expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
   });
 
+  it('runs the current search with Enter when suggestions are closed', () => {
+    const { onQueryChange } = renderPanel({ query: '  kitab  ' });
+    const input = screen.getByRole('combobox', {
+      name: 'Dictionary search',
+    });
+
+    fireEvent.keyDown(input, { key: 'Enter' });
+
+    expect(onQueryChange).toHaveBeenCalledWith('kitab');
+    expect(screen.getByText('Search updated')).toBeInTheDocument();
+  });
+
   it('routes result actions to study and conversion handlers', () => {
     const result: DictionarySearchResult = {
       entry: yaxshiEntry,
@@ -138,6 +150,19 @@ describe('DictionaryPanel', () => {
     fireEvent.click(screen.getByRole('button', { name: 'kitab' }));
 
     expect(onQueryChange).toHaveBeenCalledWith('kitab');
+  });
+
+  it('shows did-you-mean suggestions for empty results', () => {
+    const suggestions: DictionarySuggestion[] = [
+      { entry: yaxshiEntry, value: 'yaxshi', matchedOn: 'uly', score: 7 },
+    ];
+    setLookupState({ suggestions });
+    const { onQueryChange } = renderPanel({ query: 'yaxhsi' });
+
+    expect(screen.getByText('Did you mean')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'yaxshi' }));
+
+    expect(onQueryChange).toHaveBeenCalledWith('yaxshi');
   });
 
   it('highlights matched fragments in visible result text', () => {

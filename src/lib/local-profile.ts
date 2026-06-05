@@ -28,11 +28,20 @@ export interface QuizProgress {
   missedItems: QuizMissRecord[];
 }
 
+export interface StudyWordProgressRecord {
+  id: string;
+  token: string;
+  mastered: boolean;
+  reviewCount: number;
+  updatedAt: number;
+}
+
 export interface LocalProfileData {
   version: 1;
   exportedAt: number;
   dictionaryLookups: DictionaryLookupRecord[];
   quizProgress: QuizProgress;
+  studyProgress: StudyWordProgressRecord[];
 }
 
 interface RecordDictionaryLookupInput {
@@ -48,10 +57,18 @@ interface RecordQuizAnswerInput {
   now?: number;
 }
 
+interface RecordStudyWordProgressInput {
+  token: string;
+  mastered: boolean;
+  now?: number;
+}
+
 const DICTIONARY_LOOKUPS_KEY = 'ugbridge.dictionary.lookups.v1';
 const QUIZ_PROGRESS_KEY = 'ugbridge.quiz.progress.v1';
+const STUDY_PROGRESS_KEY = 'ugbridge.study.progress.v1';
 const MAX_DICTIONARY_LOOKUPS = 24;
 const MAX_MISSED_ITEMS = 16;
+const MAX_STUDY_PROGRESS = 96;
 const VALID_FORMS: readonly UeyJoiningForm[] = [
   'isolated',
   'initial',
@@ -191,12 +208,71 @@ export function getQuizAccuracy(progress: QuizProgress) {
   return Math.round((normalized.correct / normalized.answered) * 100);
 }
 
+export function loadStudyProgress(): StudyWordProgressRecord[] {
+  if (typeof window === 'undefined') return [];
+
+  try {
+    const raw = window.localStorage.getItem(STUDY_PROGRESS_KEY);
+    return raw ? normalizeStudyProgress(JSON.parse(raw)) : [];
+  } catch {
+    return [];
+  }
+}
+
+export function saveStudyProgress(
+  progress: StudyWordProgressRecord[],
+): StudyWordProgressRecord[] {
+  const normalized = normalizeStudyProgress(progress);
+  if (typeof window !== 'undefined') {
+    window.localStorage.setItem(STUDY_PROGRESS_KEY, JSON.stringify(normalized));
+  }
+  return normalized;
+}
+
+export function clearStudyProgress(): StudyWordProgressRecord[] {
+  if (typeof window !== 'undefined') {
+    window.localStorage.removeItem(STUDY_PROGRESS_KEY);
+  }
+  return [];
+}
+
+export function recordStudyWordProgress(
+  progress: StudyWordProgressRecord[],
+  input: RecordStudyWordProgressInput,
+): StudyWordProgressRecord[] {
+  const token = input.token.trim();
+  if (!token) return normalizeStudyProgress(progress);
+
+  const current = normalizeStudyProgress(progress);
+  const id = getStudyWordProgressId(token);
+  const previous = current.find((item) => item.id === id);
+  const nextRecord: StudyWordProgressRecord = {
+    id,
+    token,
+    mastered: input.mastered,
+    reviewCount: input.mastered
+      ? previous?.reviewCount ?? 0
+      : (previous?.reviewCount ?? 0) + 1,
+    updatedAt: input.now ?? Date.now(),
+  };
+
+  return normalizeStudyProgress([
+    nextRecord,
+    ...current.filter((item) => item.id !== id),
+  ]);
+}
+
+export function getStudyWordProgressId(token: string) {
+  return token.trim().toLocaleLowerCase().replace(/\s+/g, ' ');
+}
+
 export function exportLocalProfileData(now = Date.now()): LocalProfileData {
   return {
     version: 1,
     exportedAt: now,
     dictionaryLookups: loadDictionaryLookups(),
     quizProgress: loadQuizProgress(),
+    studyProgress: loadStudyProgress(),
   };
 }
 
@@ -217,6 +293,9 @@ export function importLocalProfileData(value: unknown): LocalProfileData {
   const quizProgress = saveQuizProgress(
     normalizeQuizProgress(data.quizProgress),
   );
+  const studyProgress = saveStudyProgress(
+    normalizeStudyProgress(data.studyProgress),
+  );
 
   return {
     version: 1,
@@ -226,6 +305,7 @@ export function importLocalProfileData(value: unknown): LocalProfileData {
         : Date.now(),
     dictionaryLookups,
     quizProgress,
+    studyProgress,
   };
 }
 
@@ -289,6 +369,39 @@ export function normalizeQuizProgress(value: unknown): QuizProgress {
     updatedAt,
     missedItems: normalizeMissedItems(record.missedItems),
   };
+}
+
+export function normalizeStudyProgress(
+  value: unknown,
+): StudyWordProgressRecord[] {
+  if (!Array.isArray(value)) return [];
+
+  const seen = new Set<string>();
+  const progress: StudyWordProgressRecord[] = [];
+
+  for (const item of value) {
+    if (!item || typeof item !== 'object') continue;
+    const record = item as Partial<StudyWordProgressRecord>;
+    const token = typeof record.token === 'string' ? record.token.trim() : '';
+    const id = getStudyWordProgressId(token);
+    if (!token || !id || seen.has(id)) continue;
+
+    seen.add(id);
+    progress.push({
+      id,
+      token,
+      mastered: record.mastered === true,
+      reviewCount: normalizeCount(record.reviewCount),
+      updatedAt:
+        typeof record.updatedAt === 'number' && Number.isFinite(record.updatedAt)
+          ? record.updatedAt
+          : 0,
+    });
+  }
+
+  return progress
+    .sort((a, b) => b.updatedAt - a.updatedAt || a.token.localeCompare(b.token))
+    .slice(0, MAX_STUDY_PROGRESS);
 }
 
 function upsertMissedItem(

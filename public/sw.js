@@ -1,5 +1,11 @@
-const CACHE_NAME = 'ulybridge-v4';
-const APP_SHELL = ['/', '/index.html', '/manifest.webmanifest', '/icon.svg'];
+const CACHE_NAME = 'ulybridge-v5';
+const APP_SHELL = [
+  '/',
+  '/index.html',
+  '/manifest.webmanifest',
+  '/icon.svg',
+  '/dictionary/manifest.json',
+];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(

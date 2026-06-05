@@ -44,19 +44,20 @@
 
 - **Convert UEY ⇄ ULY** with smart direction detection, colored segment
   highlighting, IPA hints, long-text counters, conversion quality hints,
-  copy/share actions, shareable URLs, and `.txt` upload/download.
+  copy/share actions, live shareable URLs, keyboard shortcuts, and `.txt`
+  upload/download.
 - **Look up converted words inline** by tapping output word chips that open
   dictionary results without leaving the conversion workspace.
 - **Inspect the letter bridge** from ULY to UEY, including per-segment mapping,
   word-initial hamza behavior, and Uyghur letter forms.
 - **Search offline dictionary data** from the home page or dictionary view by
   UEY, ULY, or English with suggestions, matched-text highlighting,
-  cross-script fallbacks, recent searches, saved lookup records, copy actions,
-  and lazy-loaded static shards.
+  cross-script fallbacks, typo suggestions, recent searches, saved lookup
+  records, copy actions, and lazy-loaded static shards.
 - **Study and practice UEY** through vowel-highlighted letter breakdowns,
   alphabet pages, browser-shaped highlighted examples, connected joining-form
-  samples, letter progress, and local quiz progress that can focus on learned
-  letters or fall back to all 32 sounds.
+  samples, local word mastery/review state, letter progress, and local quiz
+  progress that can focus on learned letters or fall back to all 32 sounds.
 - **Customize local workflows** with browser-local custom words, recent
   conversions, ULY input helpers, a privacy-first local study profile with JSON
   export/import and no retained backend profile data, system/day/night theme
@@ -272,9 +273,10 @@ Real access must be protected with Firebase Security Rules and Authentication.
 ## Privacy and Data
 
 Core conversion, dictionary lookup, study tools, custom words, and recent
-history run in the browser. Custom words, history, theme mode, and TTS settings
-are stored locally in the user's browser storage. Stored values are normalized
-on load, and invalid entries are ignored instead of being restored into the UI.
+history run in the browser. Custom words, history, study progress, theme mode,
+and TTS settings are stored locally in the user's browser storage. Stored
+values are normalized on load, and invalid entries are ignored instead of being
+restored into the UI.
 
 The app sends text to a network service only when a user configures or selects
 a TTS provider that requires an endpoint.
@@ -302,9 +304,10 @@ configured in [.firebaserc](.firebaserc).
 
 The test suite covers converter behavior, round-trip expectations, IPA hints,
 alphabet data and connected form samples, dictionary search, cross-script
-fallbacks, retryable shard loading, dictionary panel interactions, app
-conversion workflows, text input/output controls, custom transliterations,
-history, learning progress, speech controls, and TTS settings.
+fallbacks, typo suggestions, retryable shard loading, dictionary panel
+interactions, app conversion workflows, shareable URL state, keyboard
+shortcuts, text input/output controls, custom transliterations, history,
+learning progress, speech controls, and TTS settings.
 Lightpanda smoke checks cover the homepage, shared conversion URLs, and
 dictionary result rendering in a lightweight browser runtime. Real-browser
 smoke checks are still useful for responsive navigation, especially clipboard,

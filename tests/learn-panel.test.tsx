@@ -1,9 +1,13 @@
-import { render, screen, within } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { fireEvent, render, screen, within } from '@testing-library/react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { LearnPanel } from '../src/components/LearnPanel';
 import { traceConversion } from '../src/lib/converter';
 
 describe('LearnPanel', () => {
+  beforeEach(() => {
+    window.localStorage.clear();
+  });
+
   it('does not show letter progress in the learn reference view', () => {
     render(
       <LearnPanel
@@ -88,5 +92,31 @@ describe('LearnPanel', () => {
     expect(vowelTile).toHaveClass('border-2', 'bg-emerald-100', 'ring-2');
     expect(plainTile).toHaveClass('bg-white', 'ring-1');
     expect(plainTile).not.toHaveClass('border-2');
+  });
+
+  it('saves word study progress locally', () => {
+    render(
+      <LearnPanel
+        trace={traceConversion('yaxshi', 'uly-to-uey')}
+        value="yaxshi"
+        onChange={vi.fn()}
+      />,
+    );
+
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Mark yaxshi mastered' }),
+    );
+
+    expect(screen.getByText('Mastered 1/1')).toBeInTheDocument();
+    expect(
+      JSON.parse(
+        window.localStorage.getItem('ugbridge.study.progress.v1') ?? '[]',
+      ),
+    ).toMatchObject([
+      {
+        token: 'yaxshi',
+        mastered: true,
+      },
+    ]);
   });
 });

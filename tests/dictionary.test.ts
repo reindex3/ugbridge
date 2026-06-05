@@ -117,6 +117,19 @@ describe('suggestDictionary', () => {
     expect(suggestion.matchedOn).toBe('definition');
   });
 
+  it('suggests near ULY spelling matches', () => {
+    const [suggestion] = suggestDictionary('yaxhsi');
+    expect(suggestion.value).toBe('yaxshi');
+    expect(suggestion.matchedOn).toBe('uly');
+  });
+
+  it('suggests near English definition matches', () => {
+    const [suggestion] = suggestDictionary('boook');
+    expect(suggestion.value).toBe('book');
+    expect(suggestion.entry.uly).toBe('kitab');
+    expect(suggestion.matchedOn).toBe('definition');
+  });
+
   it('dedupes repeated suggestion values across entries', () => {
     const suggestions = suggestDictionary('apple', [
       {

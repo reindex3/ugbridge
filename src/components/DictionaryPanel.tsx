@@ -101,23 +101,44 @@ export function DictionaryPanel({
     setSelectedSuggestion(0);
   };
 
-  const handleKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
-    if (!showSuggestions) return;
+  const executeSearch = () => {
+    const trimmed = query.trim();
+    if (!trimmed) return;
 
-    if (event.key === 'ArrowDown') {
+    onQueryChange(trimmed);
+    setIsSuggesting(false);
+    setSelectedSuggestion(0);
+    setRecentQueries(saveRecentDictionaryQuery(trimmed));
+    showPanelNotice('Search updated');
+  };
+
+  const handleKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
+    if (showSuggestions) {
+      if (event.key === 'ArrowDown') {
+        event.preventDefault();
+        setSelectedSuggestion((current) =>
+          current + 1 >= suggestions.length ? 0 : current + 1,
+        );
+      } else if (event.key === 'ArrowUp') {
+        event.preventDefault();
+        setSelectedSuggestion((current) =>
+          current - 1 < 0 ? suggestions.length - 1 : current - 1,
+        );
+      } else if (event.key === 'Enter') {
+        event.preventDefault();
+        chooseSuggestion(suggestions[selectedSuggestion]);
+      } else if (event.key === 'Escape') {
+        event.stopPropagation();
+        setIsSuggesting(false);
+      }
+      return;
+    }
+
+    if (event.key === 'Enter') {
       event.preventDefault();
-      setSelectedSuggestion((current) =>
-        current + 1 >= suggestions.length ? 0 : current + 1,
-      );
-    } else if (event.key === 'ArrowUp') {
-      event.preventDefault();
-      setSelectedSuggestion((current) =>
-        current - 1 < 0 ? suggestions.length - 1 : current - 1,
-      );
-    } else if (event.key === 'Enter') {
-      event.preventDefault();
-      chooseSuggestion(suggestions[selectedSuggestion]);
+      executeSearch();
     } else if (event.key === 'Escape') {
+      event.stopPropagation();
       setIsSuggesting(false);
     }
   };
@@ -335,7 +356,11 @@ export function DictionaryPanel({
               />
             ))
           ) : isLoading ? null : (
-            <EmptyDictionaryState query={query} />
+            <EmptyDictionaryState
+              query={query}
+              suggestions={suggestions}
+              onChoose={chooseQuery}
+            />
           )}
         </div>
       ) : (
@@ -715,10 +740,41 @@ function DictionaryOverview({
   );
 }
 
-function EmptyDictionaryState({ query }: { query: string }) {
+function EmptyDictionaryState({
+  query,
+  suggestions,
+  onChoose,
+}: {
+  query: string;
+  suggestions: DictionarySuggestion[];
+  onChoose: (value: string) => void;
+}) {
+  const nearbySuggestions = suggestions.slice(0, 3);
+
   return (
     <section className="rounded-lg border border-dashed border-slate-300 bg-white/70 p-6 text-sm leading-6 text-slate-500">
-      No local dictionary match for <span className="font-semibold">{query}</span>.
+      <p>
+        No local dictionary match for{' '}
+        <span className="font-semibold">{query}</span>.
+      </p>
+      {nearbySuggestions.length ? (
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          <span className="text-xs font-semibold text-slate-400">
+            Did you mean
+          </span>
+          {nearbySuggestions.map((suggestion) => (
+            <button
+              key={`${suggestion.matchedOn}-${suggestion.value}`}
+              type="button"
+              onClick={() => onChoose(suggestion.value)}
+              className="max-w-44 truncate rounded-full border border-indigo-200 bg-white px-3 py-1 text-xs font-semibold text-indigo-700 transition hover:bg-indigo-50"
+              title={`${suggestion.value} · ${suggestion.entry.uly}`}
+            >
+              {suggestion.value}
+            </button>
+          ))}
+        </div>
+      ) : null}
     </section>
   );
 }

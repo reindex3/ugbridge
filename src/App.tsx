@@ -69,8 +69,10 @@ import {
   importLocalProfileData,
   loadDictionaryLookups,
   loadQuizProgress,
+  loadStudyProgress,
   type DictionaryLookupRecord,
   type QuizProgress,
+  type StudyWordProgressRecord,
 } from './lib/local-profile';
 
 type Direction = 'uey-to-uly' | 'uly-to-uey';
@@ -84,7 +86,7 @@ interface InitialState {
 }
 
 const BUTTON_CLASS =
-  'inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-xs transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50';
+  'inline-flex min-h-10 max-w-full shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-full border border-slate-200 bg-white px-2.5 py-2 text-sm font-medium text-slate-700 shadow-xs transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 sm:px-3';
 const FOOTER_LINK_CLASS =
   'inline-flex items-center justify-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-xs transition hover:border-slate-300 hover:bg-slate-50';
 
@@ -159,6 +161,22 @@ export default function App() {
     activeView === 'convert' || activeView === 'learn';
 
   useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const url = buildAppStateUrl(new URL(window.location.href), {
+      direction: activeDirection,
+      input,
+      lookupQuery,
+      view: activeView,
+    });
+    const next = `${url.pathname}${url.search}${url.hash}`;
+    const current = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+    if (next !== current) {
+      window.history.replaceState(window.history.state, '', next);
+    }
+  }, [activeDirection, activeView, input, lookupQuery]);
+
+  useEffect(() => {
     if (activeView !== 'convert' || !input.trim() || !output.trim()) return;
 
     const timer = window.setTimeout(() => {
@@ -213,6 +231,50 @@ export default function App() {
     showNotice('Text cleared');
   };
 
+  useEffect(() => {
+    const handleShortcut = (event: KeyboardEvent) => {
+      if (event.defaultPrevented) return;
+
+      if (event.key === 'Enter' && (event.metaKey || event.ctrlKey)) {
+        event.preventDefault();
+        setDirection(inferConversionShortcutDirection(input, direction));
+        setActiveView('convert');
+        showNotice(input.trim() ? 'Converter opened' : 'Converter ready');
+        return;
+      }
+
+      if (
+        event.key !== 'Escape' ||
+        event.metaKey ||
+        event.ctrlKey ||
+        event.altKey
+      ) {
+        return;
+      }
+
+      if (lookupQuery) {
+        event.preventDefault();
+        setLookupQuery('');
+        showNotice('Lookup hidden');
+        return;
+      }
+
+      if (notice) {
+        event.preventDefault();
+        setNotice('');
+        return;
+      }
+
+      if (!isEditableEventTarget(event.target) && input) {
+        event.preventDefault();
+        clearInput();
+      }
+    };
+
+    window.addEventListener('keydown', handleShortcut);
+    return () => window.removeEventListener('keydown', handleShortcut);
+  }, [direction, input, lookupQuery, notice]);
+
   const pasteClipboardText = async () => {
     if (!navigator.clipboard?.readText) {
       showNotice('Clipboard paste unavailable');
@@ -254,15 +316,12 @@ export default function App() {
       return;
     }
 
-    const url = new URL(window.location.href);
-    url.search = '';
-    url.searchParams.set(
-      'view',
-      hasTextWorkspaceActions && input ? 'convert' : activeView,
-    );
-    url.searchParams.set('d', activeDirection);
-    if (input) url.searchParams.set('text', input);
-    if (lookupQuery) url.searchParams.set('lookup', lookupQuery);
+    const url = buildAppStateUrl(new URL(window.location.href), {
+      direction: activeDirection,
+      input,
+      lookupQuery,
+      view: activeView,
+    });
     try {
       await navigator.clipboard.writeText(url.toString());
       showNotice('Share link copied');
@@ -983,10 +1042,15 @@ function LocalProfilePanel({
   );
   const [quizProgress, setQuizProgress] =
     useState<QuizProgress>(loadQuizProgress);
+  const [studyProgress, setStudyProgress] =
+    useState<StudyWordProgressRecord[]>(loadStudyProgress);
   const [status, setStatus] = useState('');
   const importInputRef = useRef<HTMLInputElement | null>(null);
   const accuracy = getQuizAccuracy(quizProgress);
   const topLookups = lookups.slice(0, 4);
+  const masteredStudyCount = studyProgress.filter(
+    (item) => item.mastered,
+  ).length;
 
   const showStatus = (message: string) => {
     setStatus(message);
@@ -1014,6 +1078,7 @@ function LocalProfilePanel({
       const imported = importLocalProfileData(JSON.parse(await file.text()));
       setLookups(imported.dictionaryLookups);
       setQuizProgress(imported.quizProgress);
+      setStudyProgress(imported.studyProgress);
       showStatus('Local profile imported');
     } catch {
       showStatus('Import failed');
@@ -1072,11 +1137,20 @@ function LocalProfilePanel({
         }}
       />
 
-      <div className="mt-3 grid gap-2 md:grid-cols-3">
+      <div className="mt-3 grid gap-2 md:grid-cols-4">
         <LocalProfileStat
           label="Saved lookups"
           value={String(lookups.length)}
           detail={lookups.length ? `${lookups[0].uly} most recent` : 'No words yet'}
+        />
+        <LocalProfileStat
+          label="Study mastered"
+          value={String(masteredStudyCount)}
+          detail={
+            studyProgress[0]
+              ? `Last studied ${studyProgress[0].token}`
+              : 'No study words yet'
+          }
         />
         <LocalProfileStat
           label="Quiz answered"
@@ -1624,4 +1698,45 @@ function readInitialState(): InitialState {
     input: params.get('text') ?? params.get('q') ?? '',
     lookupQuery: params.get('lookup') ?? '',
   };
+}
+
+interface AppUrlState {
+  direction: Direction;
+  input: string;
+  lookupQuery: string;
+  view: View;
+}
+
+function buildAppStateUrl(url: URL, state: AppUrlState) {
+  url.search = '';
+
+  if (state.view !== 'home' || state.input || state.lookupQuery) {
+    url.searchParams.set('view', state.view);
+  }
+
+  if (state.view === 'convert' || state.view === 'learn') {
+    url.searchParams.set('d', state.direction);
+    if (state.input) url.searchParams.set('text', state.input);
+    if (state.lookupQuery) url.searchParams.set('lookup', state.lookupQuery);
+  } else if (state.view === 'dictionary' || state.view === 'home') {
+    if (state.input) url.searchParams.set('q', state.input);
+  }
+
+  return url;
+}
+
+function inferConversionShortcutDirection(
+  value: string,
+  fallback: Direction,
+): Direction {
+  const detected = detectConversionDirection(value);
+  if (detected.direction) return detected.direction;
+  if (/[\u0600-\u06ff\u0750-\u077f]/.test(value)) return 'uey-to-uly';
+  if (/[A-Za-zéëöüÉËÖÜ]/.test(value)) return 'uly-to-uey';
+  return fallback;
+}
+
+function isEditableEventTarget(target: EventTarget | null) {
+  if (!(target instanceof HTMLElement)) return false;
+  return Boolean(target.closest('input, textarea, [contenteditable="true"]'));
 }

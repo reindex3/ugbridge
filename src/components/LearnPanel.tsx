@@ -1,3 +1,5 @@
+import { useMemo, useState } from 'react';
+import { CheckCircle2, RotateCcw } from 'lucide-react';
 import {
   buildUlyToUeyStudy,
   UEY_JOINING_FORM_LABELS,
@@ -8,6 +10,13 @@ import {
   type UeyStudyLetter,
   type UeyStudyWord,
 } from '../lib/converter';
+import {
+  getStudyWordProgressId,
+  loadStudyProgress,
+  recordStudyWordProgress,
+  saveStudyProgress,
+  type StudyWordProgressRecord,
+} from '../lib/local-profile';
 import { TextInput } from './TextInput';
 
 interface LearnPanelProps {
@@ -60,6 +69,33 @@ const VOWEL_TOKENS: readonly string[] = [
 
 export function LearnPanel({ trace, value, onChange }: LearnPanelProps) {
   const study = buildUlyToUeyStudy(trace);
+  const [progress, setProgress] =
+    useState<StudyWordProgressRecord[]>(loadStudyProgress);
+  const progressByToken = useMemo(() => {
+    const next = new Map<string, StudyWordProgressRecord>();
+    for (const item of progress) {
+      next.set(item.id, item);
+    }
+    return next;
+  }, [progress]);
+  const masteredWordCount = study.words.filter(
+    (word) => progressByToken.get(getStudyWordProgressId(word.uly))?.mastered,
+  ).length;
+  const reviewWordCount = study.words.filter((word) => {
+    const record = progressByToken.get(getStudyWordProgressId(word.uly));
+    return record && !record.mastered;
+  }).length;
+
+  const markWord = (token: string, mastered: boolean) => {
+    setProgress((current) =>
+      saveStudyProgress(
+        recordStudyWordProgress(current, {
+          token,
+          mastered,
+        }),
+      ),
+    );
+  };
 
   return (
     <div className="grid gap-6">
@@ -112,12 +148,29 @@ export function LearnPanel({ trace, value, onChange }: LearnPanelProps) {
             Each word is split by its rendered UEY letters, with the in-word
             shape, standalone shape, position, matching ULY letters, and IPA.
           </p>
+          {study.words.length ? (
+            <div className="mt-3 flex flex-wrap gap-2 text-xs">
+              <span className="rounded-full bg-emerald-50 px-3 py-1 font-semibold text-emerald-700 ring-1 ring-emerald-100">
+                Mastered {masteredWordCount}/{study.words.length}
+              </span>
+              {reviewWordCount ? (
+                <span className="rounded-full bg-amber-50 px-3 py-1 font-semibold text-amber-700 ring-1 ring-amber-100">
+                  Review {reviewWordCount}
+                </span>
+              ) : null}
+            </div>
+          ) : null}
         </div>
 
         {study.words.length ? (
           <div className="grid gap-4">
             {study.words.map((word) => (
-              <WordShapePanel key={word.id} word={word} />
+              <WordShapePanel
+                key={word.id}
+                word={word}
+                progress={progressByToken.get(getStudyWordProgressId(word.uly))}
+                onMark={markWord}
+              />
             ))}
           </div>
         ) : (
@@ -223,15 +276,52 @@ function LetterArrowTile({ letter }: { letter: UeyStudyLetter }) {
   );
 }
 
-function WordShapePanel({ word }: { word: UeyStudyWord }) {
+function WordShapePanel({
+  word,
+  progress,
+  onMark,
+}: {
+  word: UeyStudyWord;
+  progress: StudyWordProgressRecord | undefined;
+  onMark: (token: string, mastered: boolean) => void;
+}) {
+  const isMastered = progress?.mastered === true;
+
   return (
     <article className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-xs">
-      <div className="flex flex-col gap-3 border-b border-slate-200 bg-slate-50 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
-        <div dir="rtl" lang="ug" className="text-4xl leading-relaxed text-slate-950">
-          {word.text}
+      <div className="flex flex-col gap-3 border-b border-slate-200 bg-slate-50 px-4 py-3 lg:flex-row lg:items-center lg:justify-between">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
+          <div dir="rtl" lang="ug" className="text-4xl leading-relaxed text-slate-950">
+            {word.text}
+          </div>
+          <div className="font-mono text-sm font-semibold text-slate-500">
+            {word.uly}
+          </div>
         </div>
-        <div className="font-mono text-sm font-semibold text-slate-500">
-          {word.uly}
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={() => onMark(word.uly, true)}
+            aria-pressed={isMastered}
+            aria-label={`Mark ${word.uly} mastered`}
+            className={`inline-flex items-center justify-center gap-1.5 rounded-md border px-3 py-2 text-xs font-semibold transition ${
+              isMastered
+                ? 'border-emerald-200 bg-emerald-600 text-white'
+                : 'border-emerald-200 bg-white text-emerald-700 hover:bg-emerald-50'
+            }`}
+          >
+            <CheckCircle2 className="h-4 w-4" aria-hidden="true" />
+            Mastered
+          </button>
+          <button
+            type="button"
+            onClick={() => onMark(word.uly, false)}
+            aria-label={`Review ${word.uly} again`}
+            className="inline-flex items-center justify-center gap-1.5 rounded-md border border-amber-200 bg-white px-3 py-2 text-xs font-semibold text-amber-700 transition hover:bg-amber-50"
+          >
+            <RotateCcw className="h-4 w-4" aria-hidden="true" />
+            Again
+          </button>
         </div>
       </div>
 

@@ -115,6 +115,51 @@ describe('App conversion workflow', () => {
     );
   });
 
+  it('keeps the current convert state in the URL', () => {
+    window.history.pushState({}, '', '/?view=convert');
+    render(<App />);
+
+    fireEvent.change(getConversionInput(), {
+      target: { value: 'سالام' },
+    });
+
+    const params = new URLSearchParams(window.location.search);
+    expect(params.get('view')).toBe('convert');
+    expect(params.get('d')).toBe('uey-to-uly');
+    expect(params.get('text')).toBe('سالام');
+  });
+
+  it('opens the converter with Ctrl Enter and infers Latin input direction', () => {
+    window.history.pushState({}, '', '/?view=dictionary&q=salam');
+    render(<App />);
+
+    fireEvent.keyDown(window, { key: 'Enter', ctrlKey: true });
+
+    expect(getConversionInput()).toHaveValue('salam');
+    expect(screen.getAllByText('سالام').length).toBeGreaterThan(0);
+    expect(
+      screen.getByRole('button', {
+        name: /Currently ULY to UEY/i,
+      }),
+    ).toBeInTheDocument();
+    expect(screen.getByText('Converter opened')).toBeInTheDocument();
+  });
+
+  it('uses Escape to hide inline lookup before clearing text', () => {
+    window.history.pushState(
+      {},
+      '',
+      '/?view=convert&d=uly-to-uey&text=salam&lookup=salam',
+    );
+    render(<App />);
+
+    fireEvent.keyDown(window, { key: 'Escape' });
+
+    expect(screen.queryByText('Dictionary lookup:')).not.toBeInTheDocument();
+    expect(getConversionInput()).toHaveValue('salam');
+    expect(screen.getByText('Lookup hidden')).toBeInTheDocument();
+  });
+
   it('shows feedback when copying converted text is blocked', async () => {
     Object.defineProperty(navigator, 'clipboard', {
       configurable: true,
@@ -228,6 +273,18 @@ describe('App conversion workflow', () => {
         ],
       }),
     );
+    window.localStorage.setItem(
+      'ugbridge.study.progress.v1',
+      JSON.stringify([
+        {
+          id: 'yaxshi',
+          token: 'yaxshi',
+          mastered: true,
+          reviewCount: 0,
+          updatedAt: 3,
+        },
+      ]),
+    );
 
     render(<App />);
 
@@ -255,6 +312,8 @@ describe('App conversion workflow', () => {
     ).toBeTruthy();
     expect(screen.getByText('75% correct · best streak 2')).toBeInTheDocument();
     expect(screen.getByText('ng · final')).toBeInTheDocument();
+    expect(screen.getByText('Study mastered')).toBeInTheDocument();
+    expect(screen.getByText('Last studied yaxshi')).toBeInTheDocument();
     expect(screen.getByTitle('yaxshi · good')).toBeInTheDocument();
   });
 });

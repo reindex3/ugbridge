@@ -95,7 +95,7 @@ export function TextInput({
               type="button"
               onClick={onPasteClipboard}
               disabled={!hasClipboardRead}
-              className="rounded-md px-2 py-1 font-medium text-indigo-600 transition hover:bg-indigo-50 disabled:cursor-not-allowed disabled:text-slate-300 disabled:hover:bg-transparent"
+              className="min-h-8 rounded-md px-2 py-1 font-medium text-indigo-600 transition hover:bg-indigo-50 disabled:cursor-not-allowed disabled:text-slate-300 disabled:hover:bg-transparent"
             >
               Paste
             </button>
@@ -105,7 +105,7 @@ export function TextInput({
               type="button"
               onClick={onClear}
               disabled={!value}
-              className="rounded-md px-2 py-1 font-medium text-slate-500 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:text-slate-300 disabled:hover:bg-transparent"
+              className="min-h-8 rounded-md px-2 py-1 font-medium text-slate-500 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:text-slate-300 disabled:hover:bg-transparent"
             >
               Clear
             </button>
@@ -121,7 +121,7 @@ export function TextInput({
         dir={config.dir}
         lang={config.lang}
         placeholder={config.placeholder}
-        className="h-72 w-full resize-y rounded-lg border border-slate-200 bg-white p-4 text-xl leading-relaxed text-slate-900 shadow-xs transition focus:border-indigo-400 focus:outline-hidden focus:ring-2 focus:ring-indigo-200"
+        className="h-56 w-full resize-y rounded-lg border border-slate-200 bg-white p-4 text-xl leading-relaxed text-slate-900 shadow-xs transition focus:border-indigo-400 focus:outline-hidden focus:ring-2 focus:ring-indigo-200 sm:h-72"
       />
     </div>
   );

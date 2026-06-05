@@ -5,12 +5,16 @@ import {
   importLocalProfileData,
   loadDictionaryLookups,
   loadQuizProgress,
+  loadStudyProgress,
   normalizeDictionaryLookups,
   normalizeQuizProgress,
+  normalizeStudyProgress,
   recordDictionaryLookup,
   recordQuizAnswer,
+  recordStudyWordProgress,
   saveDictionaryLookups,
   saveQuizProgress,
+  saveStudyProgress,
 } from '../src/lib/local-profile';
 import type { DictionaryEntry } from '../src/lib/dictionary';
 
@@ -92,6 +96,31 @@ describe('local profile', () => {
     });
   });
 
+  it('tracks local study word progress', () => {
+    const first = recordStudyWordProgress([], {
+      token: 'yaxshi',
+      mastered: false,
+      now: 1,
+    });
+    const second = recordStudyWordProgress(first, {
+      token: 'yaxshi',
+      mastered: true,
+      now: 2,
+    });
+
+    expect(second).toEqual([
+      {
+        id: 'yaxshi',
+        token: 'yaxshi',
+        mastered: true,
+        reviewCount: 1,
+        updatedAt: 2,
+      },
+    ]);
+    expect(normalizeStudyProgress([{ token: '  Yaxshi  ', mastered: true }]))
+      .toMatchObject([{ id: 'yaxshi', token: 'Yaxshi', mastered: true }]);
+  });
+
   it('exports and imports the local profile payload', () => {
     saveDictionaryLookups(
       recordDictionaryLookup([], { query: 'good', entry: yaxshiEntry, now: 1 }),
@@ -101,6 +130,13 @@ describe('local profile', () => {
         token: 'a',
         form: 'initial',
         correct: true,
+        now: 1,
+      }),
+    );
+    saveStudyProgress(
+      recordStudyWordProgress([], {
+        token: 'yaxshi',
+        mastered: true,
         now: 1,
       }),
     );
@@ -114,6 +150,12 @@ describe('local profile', () => {
       answered: 1,
       correct: 1,
     });
+    expect(loadStudyProgress()).toMatchObject([
+      {
+        token: 'yaxshi',
+        mastered: true,
+      },
+    ]);
   });
 
   it('rejects unrelated import payloads without clearing saved data', () => {
