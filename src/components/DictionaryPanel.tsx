@@ -1,6 +1,14 @@
 import { useEffect, useRef, useState } from 'react';
 import type { KeyboardEvent } from 'react';
-import { Copy, GraduationCap, Repeat2, Search } from 'lucide-react';
+import {
+  Check,
+  Copy,
+  GraduationCap,
+  Repeat2,
+  Search,
+  Trash2,
+  X,
+} from 'lucide-react';
 import {
   type DictionarySearchMode,
   type DictionarySuggestion,
@@ -47,6 +55,7 @@ export function DictionaryPanel({
     loadRecentDictionaryQueries,
   );
   const [panelNotice, setPanelNotice] = useState('');
+  const [copiedKey, setCopiedKey] = useState('');
   const inputRef = useRef<HTMLInputElement | null>(null);
   const recordedLookupRef = useRef('');
   const {
@@ -177,10 +186,22 @@ export function DictionaryPanel({
 
     try {
       await navigator.clipboard.writeText(text);
+      setCopiedKey(label);
+      window.setTimeout(() => setCopiedKey(''), 1800);
       showPanelNotice(`${label} copied`);
     } catch {
       showPanelNotice('Clipboard copy blocked');
     }
+  };
+
+  const removeRecentQuery = (value: string) => {
+    setRecentQueries(removeRecentDictionaryQuery(value));
+    showPanelNotice('Recent search removed');
+  };
+
+  const clearRecentQueries = () => {
+    setRecentQueries(clearRecentDictionaryQueries());
+    showPanelNotice('Recent searches cleared');
   };
 
   return (
@@ -314,16 +335,37 @@ export function DictionaryPanel({
               Recent
             </span>
             {recentQueries.map((item) => (
-              <button
+              <span
                 key={item}
-                type="button"
-                onClick={() => chooseQuery(item)}
-                className="max-w-44 truncate rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-600 transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700"
-                title={item}
+                className="inline-flex max-w-52 items-center overflow-hidden rounded-full border border-slate-200 bg-white text-xs font-medium text-slate-600 transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700"
               >
-                {item}
-              </button>
+                <button
+                  type="button"
+                  onClick={() => chooseQuery(item)}
+                  className="min-w-0 truncate px-3 py-1"
+                  title={item}
+                >
+                  {item}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => removeRecentQuery(item)}
+                  className="grid h-6 w-6 shrink-0 place-items-center border-l border-slate-100 text-slate-400 transition hover:bg-white hover:text-slate-700"
+                  aria-label={`Remove ${item} from recent searches`}
+                >
+                  <X className="h-3.5 w-3.5" aria-hidden="true" />
+                </button>
+              </span>
             ))}
+            <button
+              type="button"
+              onClick={clearRecentQueries}
+              aria-label="Clear recent searches"
+              className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-500 transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-700"
+            >
+              <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
+              Clear
+            </button>
           </div>
         ) : null}
         {panelNotice ? (
@@ -353,6 +395,7 @@ export function DictionaryPanel({
                 onStudy={onStudy}
                 onConvert={onConvert}
                 onCopy={copyDictionaryText}
+                copiedKey={copiedKey}
               />
             ))
           ) : isLoading ? null : (
@@ -393,12 +436,14 @@ function DictionaryResultCard({
   onStudy,
   onConvert,
   onCopy,
+  copiedKey,
 }: {
   result: DictionarySearchResult;
   query: string;
   onStudy: (uly: string) => void;
   onConvert: (uey: string) => void;
   onCopy: (text: string, label: string) => void;
+  copiedKey: string;
 }) {
   const { entry } = result;
   const [showAllDefinitions, setShowAllDefinitions] = useState(false);
@@ -449,17 +494,25 @@ function DictionaryResultCard({
           <button
             type="button"
             onClick={() => onCopy(entry.uey, 'UEY')}
-            className="inline-flex items-center gap-2 rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+            className={getCopyButtonClass(copiedKey === 'UEY')}
           >
-            <Copy className="h-4 w-4" aria-hidden="true" />
+            {copiedKey === 'UEY' ? (
+              <Check className="h-4 w-4" aria-hidden="true" />
+            ) : (
+              <Copy className="h-4 w-4" aria-hidden="true" />
+            )}
             Copy UEY
           </button>
           <button
             type="button"
             onClick={() => onCopy(entry.uly, 'ULY')}
-            className="inline-flex items-center gap-2 rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+            className={getCopyButtonClass(copiedKey === 'ULY')}
           >
-            <Copy className="h-4 w-4" aria-hidden="true" />
+            {copiedKey === 'ULY' ? (
+              <Check className="h-4 w-4" aria-hidden="true" />
+            ) : (
+              <Copy className="h-4 w-4" aria-hidden="true" />
+            )}
             Copy ULY
           </button>
           <button
@@ -539,6 +592,14 @@ function DictionaryResultCard({
   );
 }
 
+function getCopyButtonClass(isCopied: boolean) {
+  return `inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm font-semibold transition ${
+    isCopied
+      ? 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
+      : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
+  }`;
+}
+
 function loadRecentDictionaryQueries() {
   if (typeof window === 'undefined') return [];
 
@@ -571,6 +632,22 @@ function saveRecentDictionaryQuery(query: string) {
 
   window.localStorage.setItem(RECENT_QUERY_STORAGE_KEY, JSON.stringify(next));
   return next;
+}
+
+function removeRecentDictionaryQuery(query: string) {
+  const key = query.trim().toLocaleLowerCase();
+  if (!key) return loadRecentDictionaryQueries();
+
+  const next = loadRecentDictionaryQueries().filter(
+    (item) => item.toLocaleLowerCase() !== key,
+  );
+  window.localStorage.setItem(RECENT_QUERY_STORAGE_KEY, JSON.stringify(next));
+  return next;
+}
+
+function clearRecentDictionaryQueries() {
+  window.localStorage.removeItem(RECENT_QUERY_STORAGE_KEY);
+  return [];
 }
 
 function getVisibleDefinitions(

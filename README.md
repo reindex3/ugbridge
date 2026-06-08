@@ -53,7 +53,8 @@
 - **Search offline dictionary data** from the home page or dictionary view by
   UEY, ULY, or English with suggestions, matched-text highlighting,
   cross-script fallbacks, typo suggestions, recent searches, saved lookup
-  records, copy actions, and lazy-loaded static shards.
+  controls, `?dict=` share links, saved lookup records, copy actions, and
+  lazy-loaded static shards.
 - **Study and practice UEY** through vowel-highlighted letter breakdowns,
   alphabet pages, browser-shaped highlighted examples, connected joining-form
   samples, local word mastery/review state, letter progress, and local quiz
@@ -309,7 +310,7 @@ interactions, app conversion workflows, shareable URL state, keyboard
 shortcuts, text input/output controls, custom transliterations, history,
 learning progress, speech controls, and TTS settings.
 Lightpanda smoke checks cover the homepage, shared conversion URLs, and
-dictionary result rendering in a lightweight browser runtime. Real-browser
+dictionary `?dict=` result rendering in a lightweight browser runtime. Real-browser
 smoke checks are still useful for responsive navigation, especially clipboard,
 dictionary shard fetches, and mobile tab fit.
 

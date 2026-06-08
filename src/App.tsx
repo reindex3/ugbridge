@@ -4,6 +4,7 @@ import {
   ArrowRight,
   BookOpenText,
   BookmarkPlus,
+  Check,
   Copy,
   Database,
   Download,
@@ -108,6 +109,7 @@ export default function App() {
   const [customUey, setCustomUey] = useState('');
   const [customUly, setCustomUly] = useState('');
   const [notice, setNotice] = useState('');
+  const [completedAction, setCompletedAction] = useState('');
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const tts = useMemo(
@@ -203,6 +205,12 @@ export default function App() {
   const showNotice = (message: string) => {
     setNotice(message);
     window.setTimeout(() => setNotice(''), 1800);
+  };
+
+  const showActionNotice = (message: string, action: string) => {
+    setCompletedAction(action);
+    window.setTimeout(() => setCompletedAction(''), 1800);
+    showNotice(message);
   };
 
   const handleInputChange = (value: string) => {
@@ -304,7 +312,7 @@ export default function App() {
 
     try {
       await navigator.clipboard.writeText(text);
-      showNotice(`${label} copied`);
+      showActionNotice(`${label} copied`, label);
     } catch {
       showNotice('Clipboard copy blocked');
     }
@@ -324,7 +332,7 @@ export default function App() {
     });
     try {
       await navigator.clipboard.writeText(url.toString());
-      showNotice('Share link copied');
+      showActionNotice('Share link copied', 'share');
     } catch {
       showNotice('Clipboard copy blocked');
     }
@@ -506,18 +514,26 @@ export default function App() {
                   type="button"
                   onClick={() => copyText(ueyText, 'UEY')}
                   disabled={!ueyText}
-                  className={BUTTON_CLASS}
+                  className={getToolbarButtonClass(completedAction === 'UEY')}
                 >
-                  <Copy className="h-4 w-4" aria-hidden="true" />
+                  {completedAction === 'UEY' ? (
+                    <Check className="h-4 w-4" aria-hidden="true" />
+                  ) : (
+                    <Copy className="h-4 w-4" aria-hidden="true" />
+                  )}
                   Copy UEY
                 </button>
                 <button
                   type="button"
                   onClick={() => copyText(ulyText, 'ULY')}
                   disabled={!ulyText}
-                  className={BUTTON_CLASS}
+                  className={getToolbarButtonClass(completedAction === 'ULY')}
                 >
-                  <Copy className="h-4 w-4" aria-hidden="true" />
+                  {completedAction === 'ULY' ? (
+                    <Check className="h-4 w-4" aria-hidden="true" />
+                  ) : (
+                    <Copy className="h-4 w-4" aria-hidden="true" />
+                  )}
                   Copy ULY
                 </button>
                 <button
@@ -526,9 +542,13 @@ export default function App() {
                     copyText(`UEY:\n${ueyText}\n\nULY:\n${ulyText}`, 'Both')
                   }
                   disabled={!ueyText && !ulyText}
-                  className={BUTTON_CLASS}
+                  className={getToolbarButtonClass(completedAction === 'Both')}
                 >
-                  <Files className="h-4 w-4" aria-hidden="true" />
+                  {completedAction === 'Both' ? (
+                    <Check className="h-4 w-4" aria-hidden="true" />
+                  ) : (
+                    <Files className="h-4 w-4" aria-hidden="true" />
+                  )}
                   Copy both
                 </button>
               </>
@@ -536,9 +556,13 @@ export default function App() {
             <button
               type="button"
               onClick={copyShareLink}
-              className={BUTTON_CLASS}
+              className={getToolbarButtonClass(completedAction === 'share')}
             >
-              <Share2 className="h-4 w-4" aria-hidden="true" />
+              {completedAction === 'share' ? (
+                <Check className="h-4 w-4" aria-hidden="true" />
+              ) : (
+                <Share2 className="h-4 w-4" aria-hidden="true" />
+              )}
               Share
             </button>
             {hasTextWorkspaceActions && (
@@ -1683,7 +1707,8 @@ function readInitialState(): InitialState {
   const direction =
     params.get('d') === 'uly-to-uey' ? 'uly-to-uey' : 'uey-to-uly';
   const viewParam = params.get('view');
-  const view =
+  const dictionaryQuery = params.get('dict') ?? '';
+  const view: View =
     viewParam === 'convert' ||
     viewParam === 'learn' ||
     viewParam === 'home' ||
@@ -1691,11 +1716,16 @@ function readInitialState(): InitialState {
     viewParam === 'alphabet' ||
     viewParam === 'dictionary'
       ? viewParam
+      : dictionaryQuery
+        ? 'dictionary'
       : 'home';
   return {
     direction,
     view,
-    input: params.get('text') ?? params.get('q') ?? '',
+    input:
+      view === 'dictionary'
+        ? dictionaryQuery || params.get('q') || ''
+        : params.get('text') ?? params.get('q') ?? '',
     lookupQuery: params.get('lookup') ?? '',
   };
 }
@@ -1710,7 +1740,13 @@ interface AppUrlState {
 function buildAppStateUrl(url: URL, state: AppUrlState) {
   url.search = '';
 
-  if (state.view !== 'home' || state.input || state.lookupQuery) {
+  if (state.view === 'dictionary') {
+    if (state.input) {
+      url.searchParams.set('dict', state.input);
+    } else {
+      url.searchParams.set('view', state.view);
+    }
+  } else if (state.view !== 'home' || state.input || state.lookupQuery) {
     url.searchParams.set('view', state.view);
   }
 
@@ -1718,11 +1754,17 @@ function buildAppStateUrl(url: URL, state: AppUrlState) {
     url.searchParams.set('d', state.direction);
     if (state.input) url.searchParams.set('text', state.input);
     if (state.lookupQuery) url.searchParams.set('lookup', state.lookupQuery);
-  } else if (state.view === 'dictionary' || state.view === 'home') {
+  } else if (state.view === 'home') {
     if (state.input) url.searchParams.set('q', state.input);
   }
 
   return url;
+}
+
+function getToolbarButtonClass(isComplete: boolean) {
+  if (!isComplete) return BUTTON_CLASS;
+
+  return 'inline-flex min-h-10 max-w-full shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-2 text-sm font-medium text-emerald-700 shadow-xs transition hover:bg-emerald-100 disabled:cursor-not-allowed disabled:opacity-50 sm:px-3';
 }
 
 function inferConversionShortcutDirection(

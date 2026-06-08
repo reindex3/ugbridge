@@ -29,7 +29,7 @@ const checks = [
   },
   {
     name: 'dictionary search renders results',
-    path: '/?view=dictionary&q=yaxshi',
+    path: '/?dict=yaxshi',
     waitScript: "document.body && document.body.textContent.includes('ياخشى')",
     expected: ['Dictionary search', 'ياخشى', 'yaxshi'],
   },

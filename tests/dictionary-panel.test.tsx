@@ -152,6 +152,49 @@ describe('DictionaryPanel', () => {
     expect(onQueryChange).toHaveBeenCalledWith('kitab');
   });
 
+  it('removes one recent search without changing the current query', () => {
+    window.localStorage.setItem(
+      'ugbridge.dictionary.recent.v1',
+      JSON.stringify(['kitab', 'alma']),
+    );
+    const { onQueryChange } = renderPanel();
+
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: 'Remove kitab from recent searches',
+      }),
+    );
+
+    expect(
+      screen.queryByRole('button', { name: 'kitab' }),
+    ).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'alma' })).toBeInTheDocument();
+    expect(onQueryChange).not.toHaveBeenCalled();
+    expect(
+      JSON.parse(
+        window.localStorage.getItem('ugbridge.dictionary.recent.v1') ?? '[]',
+      ),
+    ).toEqual(['alma']);
+  });
+
+  it('clears all recent searches', () => {
+    window.localStorage.setItem(
+      'ugbridge.dictionary.recent.v1',
+      JSON.stringify(['kitab', 'alma']),
+    );
+    renderPanel();
+
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Clear recent searches' }),
+    );
+
+    expect(screen.queryByText('Recent')).not.toBeInTheDocument();
+    expect(
+      window.localStorage.getItem('ugbridge.dictionary.recent.v1'),
+    ).toBeNull();
+    expect(screen.getByText('Recent searches cleared')).toBeInTheDocument();
+  });
+
   it('shows did-you-mean suggestions for empty results', () => {
     const suggestions: DictionarySuggestion[] = [
       { entry: yaxshiEntry, value: 'yaxshi', matchedOn: 'uly', score: 7 },

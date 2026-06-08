@@ -47,6 +47,18 @@ describe('App conversion workflow', () => {
     expect(screen.getByLabelText('Dictionary search')).toHaveValue('salam');
   });
 
+  it('opens a shared dictionary URL with its query restored', () => {
+    window.history.pushState({}, '', '/?dict=yaxshi');
+
+    render(<App />);
+
+    expect(screen.getByText('Local dictionary')).toBeInTheDocument();
+    expect(screen.getByLabelText('Dictionary search')).toHaveValue('yaxshi');
+    expect(new URLSearchParams(window.location.search).get('dict')).toBe(
+      'yaxshi',
+    );
+  });
+
   it('detects strong ULY input and converts it to UEY', () => {
     window.history.pushState({}, '', '/?view=convert');
     render(<App />);
@@ -113,6 +125,20 @@ describe('App conversion workflow', () => {
         '?view=convert&d=uey-to-uly&text=%D8%B3%D8%A7%D9%84%D8%A7%D9%85+%D9%83%D9%89%D8%AA%D8%A7%D8%A8&lookup=salam',
       ),
     );
+  });
+
+  it('copies a share link with a dictionary query', async () => {
+    window.history.pushState({}, '', '/?dict=yaxshi');
+    render(<App />);
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Share' }));
+    });
+
+    expect(navigator.clipboard.writeText).toHaveBeenCalledWith(
+      expect.stringContaining('/?dict=yaxshi'),
+    );
+    expect(screen.getByText('Share link copied')).toBeInTheDocument();
   });
 
   it('keeps the current convert state in the URL', () => {
