@@ -48,6 +48,7 @@ import { useTtsStatus } from './hooks/useTtsStatus';
 import { useThemeMode } from './hooks/useThemeMode';
 import { createTtsProvider } from './lib/tts';
 import { loadTtsSettings, type TtsSettings } from './lib/tts/settings';
+import { getSpeakableUeyText } from './lib/tts/speakable-text';
 import type { ThemeMode } from './lib/theme-settings';
 import {
   addConversionHistoryEntry,
@@ -137,7 +138,11 @@ export default function App() {
   );
   const output = trace.output;
 
-  const ueyText = activeDirection === 'uey-to-uly' ? input : output;
+  const ueyText = getSpeakableUeyText({
+    direction: activeDirection,
+    input,
+    output,
+  });
   const ulyText = activeDirection === 'uey-to-uly' ? output : input;
   const ipaText = useMemo(() => ulyToIpa(ulyText).trim(), [ulyText]);
   const inputMode = activeDirection === 'uey-to-uly' ? 'uey' : 'uly';

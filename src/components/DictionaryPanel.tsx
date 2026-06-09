@@ -2,14 +2,18 @@ import { useEffect, useRef, useState } from 'react';
 import type { KeyboardEvent } from 'react';
 import {
   Check,
+  Clock3,
   Copy,
   GraduationCap,
   Repeat2,
   Search,
+  SearchX,
+  Star,
   Trash2,
   X,
 } from 'lucide-react';
 import {
+  type DictionaryEntry,
   type DictionarySearchMode,
   type DictionarySuggestion,
   type DictionarySearchResult,
@@ -30,10 +34,21 @@ interface DictionaryPanelProps {
   onConvert: (uey: string) => void;
 }
 
+interface DictionaryFavoriteRecord {
+  id: string;
+  uey: string;
+  uly: string;
+  definition: string;
+  partOfSpeech: string;
+  updatedAt: number;
+}
+
 const SUGGESTED_QUERIES = ['salam', 'ياخشى', 'book', 'apple', 'thank you'];
 const VISIBLE_DEFINITION_COUNT = 5;
 const RECENT_QUERY_STORAGE_KEY = 'ugbridge.dictionary.recent.v1';
+const FAVORITE_STORAGE_KEY = 'ugbridge.dictionary.favorites.v1';
 const MAX_RECENT_QUERIES = 8;
+const MAX_FAVORITE_ENTRIES = 24;
 const SEARCH_MODES: Array<{ mode: DictionarySearchMode; label: string }> = [
   { mode: 'auto', label: 'Auto' },
   { mode: 'english', label: 'English' },
@@ -54,6 +69,9 @@ export function DictionaryPanel({
   const [recentQueries, setRecentQueries] = useState<string[]>(
     loadRecentDictionaryQueries,
   );
+  const [favoriteEntries, setFavoriteEntries] = useState<
+    DictionaryFavoriteRecord[]
+  >(loadDictionaryFavorites);
   const [panelNotice, setPanelNotice] = useState('');
   const [copiedKey, setCopiedKey] = useState('');
   const inputRef = useRef<HTMLInputElement | null>(null);
@@ -70,6 +88,7 @@ export function DictionaryPanel({
   const hasQuery = query.trim().length > 0;
   const showSuggestions = isSuggesting && hasQuery && suggestions.length > 0;
   const showUlyHelper = searchMode === 'auto' || searchMode === 'uly';
+  const favoriteIds = new Set(favoriteEntries.map((entry) => entry.id));
 
   useEffect(() => {
     const trimmed = query.trim();
@@ -204,6 +223,16 @@ export function DictionaryPanel({
     showPanelNotice('Recent searches cleared');
   };
 
+  const toggleFavoriteEntry = (entry: DictionaryEntry) => {
+    const isFavorite = favoriteIds.has(entry.id);
+    setFavoriteEntries(
+      isFavorite
+        ? removeDictionaryFavorite(entry.id)
+        : saveDictionaryFavorite(entry),
+    );
+    showPanelNotice(isFavorite ? 'Favorite removed' : 'Favorite saved');
+  };
+
   return (
     <div className="grid gap-5">
       <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-xs">
@@ -329,45 +358,17 @@ export function DictionaryPanel({
             </button>
           ))}
         </div>
-        {recentQueries.length ? (
-          <div className="mt-3 flex flex-wrap items-center gap-2">
-            <span className="text-xs font-semibold text-slate-400">
-              Recent
-            </span>
-            {recentQueries.map((item) => (
-              <span
-                key={item}
-                className="inline-flex max-w-52 items-center overflow-hidden rounded-full border border-slate-200 bg-white text-xs font-medium text-slate-600 transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700"
-              >
-                <button
-                  type="button"
-                  onClick={() => chooseQuery(item)}
-                  className="min-w-0 truncate px-3 py-1"
-                  title={item}
-                >
-                  {item}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => removeRecentQuery(item)}
-                  className="grid h-6 w-6 shrink-0 place-items-center border-l border-slate-100 text-slate-400 transition hover:bg-white hover:text-slate-700"
-                  aria-label={`Remove ${item} from recent searches`}
-                >
-                  <X className="h-3.5 w-3.5" aria-hidden="true" />
-                </button>
-              </span>
-            ))}
-            <button
-              type="button"
-              onClick={clearRecentQueries}
-              aria-label="Clear recent searches"
-              className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-500 transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-700"
-            >
-              <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
-              Clear
-            </button>
-          </div>
-        ) : null}
+        <DictionaryMemoryStrip
+          favorites={favoriteEntries}
+          recentQueries={recentQueries}
+          onChoose={chooseQuery}
+          onRemoveFavorite={(id) => {
+            setFavoriteEntries(removeDictionaryFavorite(id));
+            showPanelNotice('Favorite removed');
+          }}
+          onRemoveRecent={removeRecentQuery}
+          onClearRecent={clearRecentQueries}
+        />
         {panelNotice ? (
           <div
             role="status"
@@ -396,6 +397,8 @@ export function DictionaryPanel({
                 onConvert={onConvert}
                 onCopy={copyDictionaryText}
                 copiedKey={copiedKey}
+                isFavorite={favoriteIds.has(result.entry.id)}
+                onToggleFavorite={toggleFavoriteEntry}
               />
             ))
           ) : isLoading ? null : (
@@ -403,6 +406,7 @@ export function DictionaryPanel({
               query={query}
               suggestions={suggestions}
               onChoose={chooseQuery}
+              searchMode={searchMode}
             />
           )}
         </div>
@@ -430,6 +434,121 @@ function getSearchModeLabel(mode: DictionarySearchMode) {
   return 'Auto';
 }
 
+function DictionaryMemoryStrip({
+  favorites,
+  recentQueries,
+  onChoose,
+  onRemoveFavorite,
+  onRemoveRecent,
+  onClearRecent,
+}: {
+  favorites: readonly DictionaryFavoriteRecord[];
+  recentQueries: readonly string[];
+  onChoose: (value: string) => void;
+  onRemoveFavorite: (id: string) => void;
+  onRemoveRecent: (value: string) => void;
+  onClearRecent: () => void;
+}) {
+  if (!favorites.length && !recentQueries.length) return null;
+
+  return (
+    <div className="mt-4 grid gap-3 border-t border-slate-100 pt-3">
+      {favorites.length ? (
+        <div className="grid gap-2">
+          <div className="flex items-center gap-1.5 text-xs font-semibold text-amber-700">
+            <Star className="h-3.5 w-3.5 fill-amber-400" aria-hidden="true" />
+            Favorites
+          </div>
+          <div className="flex gap-2 overflow-x-auto pb-1">
+            {favorites.map((entry) => (
+              <span
+                key={entry.id}
+                className="inline-flex min-w-40 max-w-64 shrink-0 overflow-hidden rounded-md border border-amber-200 bg-amber-50 text-left text-xs text-amber-950"
+              >
+                <button
+                  type="button"
+                  onClick={() => onChoose(entry.uly)}
+                  className="min-w-0 flex-1 px-3 py-2 text-left"
+                  title={`${entry.uly} · ${entry.definition}`}
+                >
+                  <span
+                    dir="rtl"
+                    lang="ug"
+                    className="block truncate text-lg leading-6"
+                  >
+                    {entry.uey}
+                  </span>
+                  <span className="block truncate font-mono font-semibold">
+                    {entry.uly}
+                  </span>
+                  {entry.definition ? (
+                    <span className="block truncate text-amber-800">
+                      {entry.definition}
+                    </span>
+                  ) : null}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onRemoveFavorite(entry.id)}
+                  className="grid w-8 shrink-0 place-items-center border-l border-amber-200 text-amber-700 transition hover:bg-white"
+                  aria-label={`Remove ${entry.uly} from dictionary favorites`}
+                >
+                  <X className="h-3.5 w-3.5" aria-hidden="true" />
+                </button>
+              </span>
+            ))}
+          </div>
+        </div>
+      ) : null}
+
+      {recentQueries.length ? (
+        <div className="grid gap-2">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-500">
+              <Clock3 className="h-3.5 w-3.5" aria-hidden="true" />
+              Recent searches
+            </div>
+            <button
+              type="button"
+              onClick={onClearRecent}
+              aria-label="Clear recent searches"
+              className="inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-semibold text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+            >
+              <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
+              Clear
+            </button>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {recentQueries.map((item) => (
+              <span
+                key={item}
+                className="inline-flex max-w-56 items-center overflow-hidden rounded-md border border-slate-200 bg-slate-50 text-xs font-medium text-slate-600 transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700"
+              >
+                <button
+                  type="button"
+                  onClick={() => onChoose(item)}
+                  className="min-w-0 truncate px-3 py-1.5"
+                  title={item}
+                >
+                  {item}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onRemoveRecent(item)}
+                  className="grid h-7 w-7 shrink-0 place-items-center border-l border-slate-200 text-slate-400 transition hover:bg-white hover:text-slate-700"
+                  aria-label={`Remove ${item} from recent searches`}
+                >
+                  <X className="h-3.5 w-3.5" aria-hidden="true" />
+                </button>
+              </span>
+            ))}
+          </div>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 function DictionaryResultCard({
   result,
   query,
@@ -437,6 +556,8 @@ function DictionaryResultCard({
   onConvert,
   onCopy,
   copiedKey,
+  isFavorite,
+  onToggleFavorite,
 }: {
   result: DictionarySearchResult;
   query: string;
@@ -444,6 +565,8 @@ function DictionaryResultCard({
   onConvert: (uey: string) => void;
   onCopy: (text: string, label: string) => void;
   copiedKey: string;
+  isFavorite: boolean;
+  onToggleFavorite: (entry: DictionaryEntry) => void;
 }) {
   const { entry } = result;
   const [showAllDefinitions, setShowAllDefinitions] = useState(false);
@@ -491,6 +614,26 @@ function DictionaryResultCard({
         </div>
 
         <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={() => onToggleFavorite(entry)}
+            aria-label={
+              isFavorite
+                ? `Remove ${entry.uly} from dictionary favorites`
+                : `Save ${entry.uly} to dictionary favorites`
+            }
+            className={`inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm font-semibold transition ${
+              isFavorite
+                ? 'border-amber-200 bg-amber-50 text-amber-800 hover:bg-amber-100'
+                : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
+            }`}
+          >
+            <Star
+              className={`h-4 w-4 ${isFavorite ? 'fill-amber-400' : ''}`}
+              aria-hidden="true"
+            />
+            {isFavorite ? 'Saved' : 'Save'}
+          </button>
           <button
             type="button"
             onClick={() => onCopy(entry.uey, 'UEY')}
@@ -616,6 +759,93 @@ function loadRecentDictionaryQueries() {
   } catch {
     return [];
   }
+}
+
+function loadDictionaryFavorites(): DictionaryFavoriteRecord[] {
+  if (typeof window === 'undefined') return [];
+
+  try {
+    const parsed = JSON.parse(
+      window.localStorage.getItem(FAVORITE_STORAGE_KEY) ?? '[]',
+    );
+    return normalizeDictionaryFavorites(parsed);
+  } catch {
+    return [];
+  }
+}
+
+function saveDictionaryFavorite(entry: DictionaryEntry) {
+  const favorite = dictionaryEntryToFavorite(entry);
+  const next = normalizeDictionaryFavorites([
+    favorite,
+    ...loadDictionaryFavorites().filter((item) => item.id !== favorite.id),
+  ]);
+  window.localStorage.setItem(FAVORITE_STORAGE_KEY, JSON.stringify(next));
+  return next;
+}
+
+function removeDictionaryFavorite(id: string) {
+  const next = loadDictionaryFavorites().filter((item) => item.id !== id);
+  if (next.length) {
+    window.localStorage.setItem(FAVORITE_STORAGE_KEY, JSON.stringify(next));
+  } else {
+    window.localStorage.removeItem(FAVORITE_STORAGE_KEY);
+  }
+  return next;
+}
+
+function dictionaryEntryToFavorite(
+  entry: DictionaryEntry,
+): DictionaryFavoriteRecord {
+  return {
+    id: entry.id,
+    uey: entry.uey.trim(),
+    uly: entry.uly.trim(),
+    definition: entry.definitions[0]?.trim() ?? '',
+    partOfSpeech: entry.partOfSpeech.trim(),
+    updatedAt: Date.now(),
+  };
+}
+
+function normalizeDictionaryFavorites(
+  value: unknown,
+): DictionaryFavoriteRecord[] {
+  if (!Array.isArray(value)) return [];
+
+  const seen = new Set<string>();
+  const favorites: DictionaryFavoriteRecord[] = [];
+
+  for (const item of value) {
+    if (!item || typeof item !== 'object') continue;
+    const record = item as Partial<DictionaryFavoriteRecord>;
+    const id = typeof record.id === 'string' ? record.id.trim() : '';
+    const uey = typeof record.uey === 'string' ? record.uey.trim() : '';
+    const uly = typeof record.uly === 'string' ? record.uly.trim() : '';
+    if (!id || !uey || !uly || seen.has(id)) continue;
+
+    seen.add(id);
+    favorites.push({
+      id,
+      uey,
+      uly,
+      definition:
+        typeof record.definition === 'string' ? record.definition.trim() : '',
+      partOfSpeech:
+        typeof record.partOfSpeech === 'string'
+          ? record.partOfSpeech.trim()
+          : '',
+      updatedAt:
+        typeof record.updatedAt === 'number' && Number.isFinite(record.updatedAt)
+          ? record.updatedAt
+          : 0,
+    });
+  }
+
+  return favorites
+    .sort(
+      (a, b) => b.updatedAt - a.updatedAt || a.uly.localeCompare(b.uly),
+    )
+    .slice(0, MAX_FAVORITE_ENTRIES);
 }
 
 function saveRecentDictionaryQuery(query: string) {
@@ -809,10 +1039,33 @@ function DictionaryOverview({
   definitionCount: number;
 }) {
   return (
-    <section className="rounded-lg border border-dashed border-slate-300 bg-white/70 p-6 text-sm leading-6 text-slate-500">
-      Search works offline against {entryCount.toLocaleString()} Uyghur
-      headwords and {definitionCount.toLocaleString()} English definitions.
-      The large dataset is loaded in small shards as you type.
+    <section className="grid gap-4 rounded-lg border border-dashed border-slate-300 bg-white/70 p-6 text-sm leading-6 text-slate-500">
+      <div className="flex gap-3">
+        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-md bg-indigo-50 text-indigo-700">
+          <Search className="h-4 w-4" aria-hidden="true" />
+        </span>
+        <div>
+          <p className="font-semibold text-slate-700">
+            Search UEY, ULY, or English to start.
+          </p>
+          <p className="mt-1">
+            Search works offline against {entryCount.toLocaleString()} Uyghur
+            headwords and {definitionCount.toLocaleString()} English
+            definitions. The large dataset is loaded in small shards as you
+            type.
+          </p>
+        </div>
+      </div>
+      <div className="flex flex-wrap gap-2">
+        {SUGGESTED_QUERIES.slice(0, 4).map((item) => (
+          <span
+            key={item}
+            className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-slate-500 ring-1 ring-slate-200"
+          >
+            {item}
+          </span>
+        ))}
+      </div>
     </section>
   );
 }
@@ -821,19 +1074,34 @@ function EmptyDictionaryState({
   query,
   suggestions,
   onChoose,
+  searchMode,
 }: {
   query: string;
   suggestions: DictionarySuggestion[];
   onChoose: (value: string) => void;
+  searchMode: DictionarySearchMode;
 }) {
   const nearbySuggestions = suggestions.slice(0, 3);
+  const fallbackQueries = getNoResultFallbackQueries(query);
 
   return (
     <section className="rounded-lg border border-dashed border-slate-300 bg-white/70 p-6 text-sm leading-6 text-slate-500">
-      <p>
-        No local dictionary match for{' '}
-        <span className="font-semibold">{query}</span>.
-      </p>
+      <div className="flex gap-3">
+        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-md bg-rose-50 text-rose-700">
+          <SearchX className="h-4 w-4" aria-hidden="true" />
+        </span>
+        <div>
+          <p className="font-semibold text-slate-700">
+            No local dictionary match for{' '}
+            <span className="break-all text-slate-950">{query}</span>.
+          </p>
+          <p className="mt-1">
+            Current mode is {getSearchModeLabel(searchMode)}. Try Auto mode for
+            cross-script fallback, remove punctuation, or search a shorter root
+            word.
+          </p>
+        </div>
+      </div>
       {nearbySuggestions.length ? (
         <div className="mt-3 flex flex-wrap items-center gap-2">
           <span className="text-xs font-semibold text-slate-400">
@@ -852,6 +1120,39 @@ function EmptyDictionaryState({
           ))}
         </div>
       ) : null}
+      {!nearbySuggestions.length && fallbackQueries.length ? (
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          <span className="text-xs font-semibold text-slate-400">
+            Try
+          </span>
+          {fallbackQueries.map((value) => (
+            <button
+              key={value}
+              type="button"
+              onClick={() => onChoose(value)}
+              className="max-w-44 truncate rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold text-slate-600 transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700"
+              title={value}
+            >
+              {value}
+            </button>
+          ))}
+        </div>
+      ) : null}
     </section>
   );
+}
+
+function getNoResultFallbackQueries(query: string) {
+  const trimmed = query.trim();
+  if (!trimmed) return [];
+
+  return uniqueCandidates([
+    trimmed.replace(/[،,؛;؟?!.]+$/u, ''),
+    ...trimmed.split(/\s+/u).filter((part) => part.length >= 2),
+  ])
+    .filter(
+      (value) =>
+        value.toLocaleLowerCase() !== trimmed.toLocaleLowerCase(),
+    )
+    .slice(0, 3);
 }

@@ -146,7 +146,7 @@ describe('DictionaryPanel', () => {
     );
     const { onQueryChange } = renderPanel();
 
-    expect(screen.getByText('Recent')).toBeInTheDocument();
+    expect(screen.getByText('Recent searches')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'kitab' }));
 
     expect(onQueryChange).toHaveBeenCalledWith('kitab');
@@ -188,11 +188,57 @@ describe('DictionaryPanel', () => {
       screen.getByRole('button', { name: 'Clear recent searches' }),
     );
 
-    expect(screen.queryByText('Recent')).not.toBeInTheDocument();
+    expect(screen.queryByText('Recent searches')).not.toBeInTheDocument();
     expect(
       window.localStorage.getItem('ugbridge.dictionary.recent.v1'),
     ).toBeNull();
     expect(screen.getByText('Recent searches cleared')).toBeInTheDocument();
+  });
+
+  it('saves and removes favorite dictionary entries', () => {
+    const result: DictionarySearchResult = {
+      entry: yaxshiEntry,
+      score: 0,
+      matchedOn: 'definition',
+      matchedText: 'good',
+    };
+    setLookupState({ results: [result] });
+    const { onQueryChange } = renderPanel({ query: 'good' });
+
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: 'Save yaxshi to dictionary favorites',
+      }),
+    );
+
+    expect(screen.getByText('Favorite saved')).toBeInTheDocument();
+    expect(screen.getByText('Favorites')).toBeInTheDocument();
+    expect(
+      JSON.parse(
+        window.localStorage.getItem('ugbridge.dictionary.favorites.v1') ?? '[]',
+      ),
+    ).toMatchObject([
+      {
+        id: 'yaxshi',
+        uey: 'ياخشى',
+        uly: 'yaxshi',
+      },
+    ]);
+
+    fireEvent.click(screen.getByTitle('yaxshi · good'));
+
+    expect(onQueryChange).toHaveBeenCalledWith('yaxshi');
+
+    fireEvent.click(
+      screen.getAllByRole('button', {
+        name: 'Remove yaxshi from dictionary favorites',
+      })[0],
+    );
+
+    expect(
+      window.localStorage.getItem('ugbridge.dictionary.favorites.v1'),
+    ).toBeNull();
+    expect(screen.getByText('Favorite removed')).toBeInTheDocument();
   });
 
   it('shows did-you-mean suggestions for empty results', () => {

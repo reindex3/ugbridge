@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { QuizPanel } from '../src/components/QuizPanel';
 import { ALPHABET_STUDY_ENTRIES } from '../src/lib/converter';
@@ -71,5 +71,45 @@ describe('QuizPanel', () => {
       screen.getByText('8 answered · 75% correct · best streak 3'),
     ).toBeInTheDocument();
     expect(screen.getByText('sh · medial · 2 missed')).toBeInTheDocument();
+  });
+
+  it('switches to UEY/ULY mini quiz mode', () => {
+    render(<QuizPanel />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'UEY/ULY' }));
+
+    expect(screen.getByText('Pick the matching UEY form.')).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Shuffle practice set' }),
+    ).toBeInTheDocument();
+  });
+
+  it('starts review from saved missed forms', () => {
+    window.localStorage.setItem(
+      QUIZ_PROGRESS_KEY,
+      JSON.stringify({
+        answered: 2,
+        correct: 1,
+        currentStreak: 0,
+        bestStreak: 1,
+        updatedAt: 1,
+        missedItems: [
+          {
+            id: 'a:isolated',
+            token: 'a',
+            form: 'isolated',
+            missed: 1,
+            updatedAt: 1,
+          },
+        ],
+      }),
+    );
+
+    render(<QuizPanel />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Review missed' }));
+
+    expect(screen.getByText('Review 1 / 1')).toBeInTheDocument();
+    expect(screen.getByText('Review saved missed forms.')).toBeInTheDocument();
   });
 });

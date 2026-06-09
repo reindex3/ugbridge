@@ -53,12 +53,14 @@
 - **Search offline dictionary data** from the home page or dictionary view by
   UEY, ULY, or English with suggestions, matched-text highlighting,
   cross-script fallbacks, typo suggestions, recent searches, saved lookup
-  controls, `?dict=` share links, saved lookup records, copy actions, and
-  lazy-loaded static shards.
+  controls, dictionary favorites, clearer empty/no-result states, `?dict=`
+  share links, saved lookup records, copy actions, and lazy-loaded static
+  shards.
 - **Study and practice UEY** through vowel-highlighted letter breakdowns,
   alphabet pages, browser-shaped highlighted examples, connected joining-form
-  samples, local word mastery/review state, letter progress, and local quiz
-  progress that can focus on learned letters or fall back to all 32 sounds.
+  samples, local word mastery/review state, letter progress, randomizable quiz
+  sets, saved missed-form review, and UEY/ULY mini quizzes that can focus on
+  learned letters or fall back to all 32 sounds.
 - **Customize local workflows** with browser-local custom words, recent
   conversions, ULY input helpers, a privacy-first local study profile with JSON
   export/import and no retained backend profile data, system/day/night theme
@@ -220,12 +222,15 @@ Attribution details live in [public/fonts/README.md](public/fonts/README.md).
 ## Text To Speech
 
 Speech always receives the **UEY Arabic-script text**, even when the visible
-input is ULY.
+input is ULY. The converter sends the original UEY input for UEY → ULY mode and
+the converted UEY output for ULY → UEY mode.
 
 The default provider is the browser's Web Speech API. Most desktop browsers do
 not ship a Uyghur voice, so the UI warns when no `ug-*` voice is available.
 If browser voice detection fails, the app treats that as no Uyghur voice rather
-than leaving speech status stuck in an unknown state.
+than leaving speech status stuck in an unknown state. In practice, browser voice
+availability is the main speech-quality bottleneck; custom API and MMS routes
+can improve quality only as much as their backing model and voice support.
 
 The app also supports a user-provided TTS API from the **TTS API** control. The
 endpoint should accept:
@@ -312,7 +317,8 @@ learning progress, speech controls, and TTS settings.
 Lightpanda smoke checks cover the homepage, shared conversion URLs, and
 dictionary `?dict=` result rendering in a lightweight browser runtime. Real-browser
 smoke checks are still useful for responsive navigation, especially clipboard,
-dictionary shard fetches, and mobile tab fit.
+dictionary shard fetches, recent/favorite dictionary controls, quiz interactions,
+and mobile tab fit.
 
 ```bash
 npm test

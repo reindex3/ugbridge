@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Trash2 } from 'lucide-react';
+import { RotateCcw, Shuffle, Trash2 } from 'lucide-react';
 import {
   ALPHABET_STUDY_ENTRIES,
   getUeyPresentationGlyph,
@@ -22,8 +22,9 @@ import {
   saveLearnedTokens,
 } from './LetterProgressPanel';
 
-type QuizMode = 'sound' | 'shape';
+type QuizMode = 'sound' | 'shape' | 'script';
 type QuizPhase = 'practice' | 'review' | 'summary';
+type ReviewSource = 'set' | 'saved';
 
 interface QuizItem {
   entry: AlphabetStudyEntry;
@@ -46,6 +47,7 @@ const QUIZ_FORMS: UeyJoiningForm[] = [
 const QUIZ_MODES: Array<{ mode: QuizMode; label: string }> = [
   { mode: 'sound', label: 'Sound' },
   { mode: 'shape', label: 'Shape' },
+  { mode: 'script', label: 'UEY/ULY' },
 ];
 const GROUP_SIZE = 10;
 
@@ -58,9 +60,11 @@ export function QuizPanel() {
   const [reviewItems, setReviewItems] = useState<QuizItem[]>([]);
   const [reviewResults, setReviewResults] = useState<QuizResult[]>([]);
   const [reviewIndex, setReviewIndex] = useState(0);
+  const [reviewSource, setReviewSource] = useState<ReviewSource>('set');
   const [reviewNoticeOpen, setReviewNoticeOpen] = useState(false);
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
   const [score, setScore] = useState(0);
+  const [quizSeed, setQuizSeed] = useState(0);
   const [savedProgress, setSavedProgress] =
     useState<QuizProgress>(loadQuizProgress);
   const [learnedTokens, setLearnedTokens] = useState<Set<string>>(
@@ -68,7 +72,7 @@ export function QuizPanel() {
   );
   const quizItems = useMemo(
     () => shuffleItems(buildQuizItems(learnedTokens)),
-    [learnedTokens],
+    [learnedTokens, quizSeed],
   );
   const item =
     phase === 'review'
@@ -82,6 +86,16 @@ export function QuizPanel() {
     () => shuffleItems(QUIZ_FORMS),
     [item, mode],
   );
+  const scriptOptions = useMemo(
+    () => buildScriptOptions(quizItems, item),
+    [item, quizItems],
+  );
+  const activeOptions =
+    mode === 'shape'
+      ? shapeOptions
+      : mode === 'script'
+        ? scriptOptions
+        : soundOptions;
 
   useEffect(() => {
     setSelectedAnswer(null);
@@ -92,6 +106,7 @@ export function QuizPanel() {
     setReviewItems([]);
     setReviewResults([]);
     setReviewIndex(0);
+    setReviewSource('set');
     setReviewNoticeOpen(false);
     setScore(0);
   }, [mode, quizItems]);
@@ -109,7 +124,7 @@ export function QuizPanel() {
     });
   };
 
-  const correctAnswer = mode === 'sound' ? item.entry.token : item.form;
+  const correctAnswer = getCorrectAnswer(mode, item);
   const answered = Boolean(selectedAnswer);
   const groupNumber = Math.floor(groupStartIndex / GROUP_SIZE) + 1;
   const groupProgress = buildGroupProgress(
@@ -162,6 +177,7 @@ export function QuizPanel() {
     setReviewItems(missedItems);
     setReviewResults([]);
     setReviewIndex(0);
+    setReviewSource('set');
     setPhase(missedItems.length ? 'review' : 'summary');
     setReviewNoticeOpen(Boolean(missedItems.length));
   };
@@ -193,12 +209,39 @@ export function QuizPanel() {
     setReviewItems([]);
     setReviewResults([]);
     setReviewIndex(0);
+    setReviewSource('set');
     setReviewNoticeOpen(false);
   };
 
+  const shufflePractice = () => {
+    setSelectedAnswer(null);
+    setQuizSeed((current) => current + 1);
+  };
+
+  const startSavedMissReview = () => {
+    const missedItems = buildSavedMissReviewItems(savedProgress);
+    if (!missedItems.length) return;
+
+    setSelectedAnswer(null);
+    setGroupResults([]);
+    setReviewItems(shuffleItems(missedItems));
+    setReviewResults([]);
+    setReviewIndex(0);
+    setReviewSource('saved');
+    setReviewNoticeOpen(false);
+    setPhase('review');
+  };
+
   if (phase === 'summary') {
-    const correctCount = groupResults.filter((result) => result.correct).length;
-    const missedCount = groupResults.length - correctCount;
+    const summaryResults =
+      reviewSource === 'saved' && groupResults.length === 0
+        ? reviewResults
+        : groupResults;
+    const summaryTotal = summaryResults.length || GROUP_SIZE;
+    const correctCount = summaryResults.filter(
+      (result) => result.correct,
+    ).length;
+    const missedCount = summaryTotal - correctCount;
 
     return (
       <div className="grid gap-6">
@@ -209,6 +252,7 @@ export function QuizPanel() {
         <QuizLocalProgressPanel
           progress={savedProgress}
           onReset={() => setSavedProgress(clearQuizProgress())}
+          onReviewMisses={startSavedMissReview}
         />
         <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-xs">
           <div className="grid gap-4">
@@ -218,8 +262,9 @@ export function QuizPanel() {
                   Quick practice
                 </h2>
                 <p className="mt-1 text-sm leading-6 text-slate-500">
-                  Set {groupNumber} complete. Review the result before starting
-                  the next 10.
+                  {reviewSource === 'saved' && groupResults.length === 0
+                    ? 'Saved misses reviewed. Start a fresh random set when ready.'
+                    : `Set ${groupNumber} complete. Review the result before starting the next 10.`}
                 </p>
               </div>
               <span className="w-fit rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-500">
@@ -227,15 +272,21 @@ export function QuizPanel() {
               </span>
             </div>
 
-            <QuizProgress results={groupResults} total={GROUP_SIZE} />
+            <QuizProgress results={summaryResults} total={summaryTotal} />
 
             <div className="rounded-lg bg-slate-50 p-5 ring-1 ring-slate-200">
               <div className="text-sm font-semibold text-slate-800">
-                {correctCount}/{GROUP_SIZE} correct
+                {correctCount}/{summaryTotal} correct
               </div>
               <p className="mt-1 text-sm leading-6 text-slate-500">
-                {missedCount
-                  ? `${missedCount} missed form${missedCount === 1 ? '' : 's'} reviewed.`
+                {reviewSource === 'saved' && groupResults.length === 0
+                  ? `${summaryTotal} saved miss${
+                      summaryTotal === 1 ? '' : 'es'
+                    } reviewed.`
+                  : missedCount
+                    ? `${missedCount} missed form${
+                        missedCount === 1 ? '' : 's'
+                      } reviewed.`
                   : 'Clean set. No missed forms to review.'}
               </p>
               <button
@@ -261,6 +312,7 @@ export function QuizPanel() {
       <QuizLocalProgressPanel
         progress={savedProgress}
         onReset={() => setSavedProgress(clearQuizProgress())}
+        onReviewMisses={startSavedMissReview}
       />
       <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-xs">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -293,27 +345,52 @@ export function QuizPanel() {
             <span className="w-fit rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-500">
               {quizItems.length} forms · Score {score}
             </span>
+            <button
+              type="button"
+              onClick={shufflePractice}
+              className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-500 transition hover:bg-slate-50 hover:text-slate-700"
+              aria-label="Shuffle practice set"
+            >
+              <Shuffle className="h-3.5 w-3.5" aria-hidden="true" />
+              Shuffle
+            </button>
           </div>
         </div>
 
         <div className="mt-4 grid gap-4 lg:grid-cols-[12rem_minmax(0,1fr)] lg:items-center">
           <div className="grid justify-items-center rounded-lg bg-slate-50 px-4 py-5 ring-1 ring-slate-200">
-            <span
-              dir="rtl"
-              lang="ug"
-              className="text-6xl leading-none text-slate-950"
-            >
-              {item.glyph}
-            </span>
+            {mode === 'script' ? (
+              <span
+                dir="ltr"
+                className="font-mono text-5xl font-bold leading-none text-slate-950"
+              >
+                {item.entry.token}
+              </span>
+            ) : (
+              <span
+                dir="rtl"
+                lang="ug"
+                className="text-6xl leading-none text-slate-950"
+              >
+                {item.glyph}
+              </span>
+            )}
             <span
               className={`mt-3 rounded-full px-2.5 py-1 text-xs font-semibold ${formClass(
                 item.form,
               )}`}
             >
-              {mode === 'sound' || answered
-                ? UEY_JOINING_FORM_LABELS[item.form]
-                : 'which shape?'}
+              {promptBadge(mode, item, answered)}
             </span>
+            {mode === 'script' && answered ? (
+              <span
+                dir="rtl"
+                lang="ug"
+                className="mt-2 text-4xl leading-none text-slate-900"
+              >
+                {item.glyph}
+              </span>
+            ) : null}
             <span className="mt-2 min-h-5 font-mono text-sm font-semibold text-emerald-700">
               {answered ? `/${ulyTokenToIpa(item.entry.token)}/` : null}
             </span>
@@ -328,29 +405,24 @@ export function QuizPanel() {
               </span>
               <span>
                 {phase === 'review'
-                  ? 'Review the missed forms from this set.'
-                  : mode === 'sound'
-                    ? 'Pick the matching ULY letter or digraph.'
-                    : `Pick the shape used by ${item.entry.token}.`}
+                  ? reviewSource === 'saved'
+                    ? 'Review saved missed forms.'
+                    : 'Review the missed forms from this set.'
+                  : questionHint(mode, item)}
               </span>
             </div>
 
             <div className="grid gap-2 sm:grid-cols-2">
-              {(mode === 'sound' ? soundOptions : shapeOptions).map((option) => (
+              {activeOptions.map((option) => (
                 <QuizAnswerButton
-                  key={typeof option === 'string' ? option : option.entry.token}
-                  label={
-                    typeof option === 'string' ? option : option.entry.token
-                  }
-                  detail={
-                    typeof option === 'string'
-                      ? ''
-                      : `/${ulyTokenToIpa(option.entry.token)}/ · ${option.entry.kind}`
-                  }
-                  selected={selectedAnswer === answerValue(option)}
-                  correct={answerValue(option) === correctAnswer}
+                  key={optionKey(option)}
+                  label={optionLabel(mode, option)}
+                  detail={optionDetail(mode, option)}
+                  textDirection={mode === 'script' ? 'rtl' : 'ltr'}
+                  selected={selectedAnswer === answerValue(mode, option)}
+                  correct={answerValue(mode, option) === correctAnswer}
                   answered={answered}
-                  onClick={() => chooseAnswer(answerValue(option))}
+                  onClick={() => chooseAnswer(answerValue(mode, option))}
                 />
               ))}
               {answered && (
@@ -395,9 +467,11 @@ export function QuizPanel() {
 function QuizLocalProgressPanel({
   progress,
   onReset,
+  onReviewMisses,
 }: {
   progress: QuizProgress;
   onReset: () => void;
+  onReviewMisses: () => void;
 }) {
   const accuracy = getQuizAccuracy(progress);
   const topMisses = progress.missedItems.slice(0, 4);
@@ -415,15 +489,26 @@ function QuizLocalProgressPanel({
               : 'No quiz answers saved yet.'}
           </p>
         </div>
-        <button
-          type="button"
-          onClick={onReset}
-          disabled={!progress.answered}
-          className="inline-flex w-fit items-center gap-2 rounded-md border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-600 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
-          Reset
-        </button>
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={onReviewMisses}
+            disabled={!progress.missedItems.length}
+            className="inline-flex w-fit items-center gap-2 rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-xs font-semibold text-rose-700 transition hover:bg-rose-100 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            <RotateCcw className="h-3.5 w-3.5" aria-hidden="true" />
+            Review missed
+          </button>
+          <button
+            type="button"
+            onClick={onReset}
+            disabled={!progress.answered}
+            className="inline-flex w-fit items-center gap-2 rounded-md border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-600 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
+            Reset
+          </button>
+        </div>
       </div>
 
       {topMisses.length ? (
@@ -533,6 +618,7 @@ function QuizProgress({
 function QuizAnswerButton({
   label,
   detail,
+  textDirection,
   selected,
   correct,
   answered,
@@ -540,6 +626,7 @@ function QuizAnswerButton({
 }: {
   label: string;
   detail: string;
+  textDirection: 'ltr' | 'rtl';
   selected: boolean;
   correct: boolean;
   answered: boolean;
@@ -560,7 +647,13 @@ function QuizAnswerButton({
               : 'bg-white text-slate-900 ring-slate-200 hover:bg-indigo-50 hover:ring-indigo-100'
       }`}
     >
-      <span className="font-mono text-lg font-bold">{label}</span>
+      <span
+        dir={textDirection}
+        lang={textDirection === 'rtl' ? 'ug' : undefined}
+        className="font-mono text-lg font-bold"
+      >
+        {label}
+      </span>
       {detail ? (
         <span className="ml-2 text-sm font-semibold text-slate-400">
           {detail}
@@ -597,6 +690,21 @@ function buildSoundOptions(items: readonly QuizItem[], item: QuizItem) {
   return shuffleItems([item, ...distractors.slice(0, 3)]);
 }
 
+function buildScriptOptions(items: readonly QuizItem[], item: QuizItem) {
+  return buildSoundOptions(items, item);
+}
+
+function buildSavedMissReviewItems(progress: QuizProgress) {
+  const allItems = buildQuizItems(new Set<string>());
+  return progress.missedItems
+    .map((miss) =>
+      allItems.find(
+        (item) => item.entry.token === miss.token && item.form === miss.form,
+      ),
+    )
+    .filter((item): item is QuizItem => Boolean(item));
+}
+
 function buildGroupProgress(
   results: readonly QuizResult[],
   pendingResult: QuizResult | null,
@@ -604,8 +712,51 @@ function buildGroupProgress(
   return pendingResult ? [...results, pendingResult] : results;
 }
 
-function answerValue(option: QuizItem | UeyJoiningForm) {
-  return typeof option === 'string' ? option : option.entry.token;
+function getCorrectAnswer(mode: QuizMode, item: QuizItem) {
+  if (mode === 'shape') return item.form;
+  if (mode === 'script') return quizItemId(item);
+  return item.entry.token;
+}
+
+function answerValue(mode: QuizMode, option: QuizItem | UeyJoiningForm) {
+  if (typeof option === 'string') return option;
+  return mode === 'script' ? quizItemId(option) : option.entry.token;
+}
+
+function optionKey(option: QuizItem | UeyJoiningForm) {
+  return typeof option === 'string' ? option : quizItemId(option);
+}
+
+function optionLabel(mode: QuizMode, option: QuizItem | UeyJoiningForm) {
+  if (typeof option === 'string') return option;
+  return mode === 'script' ? option.glyph : option.entry.token;
+}
+
+function optionDetail(mode: QuizMode, option: QuizItem | UeyJoiningForm) {
+  if (typeof option === 'string' || mode === 'script') return '';
+  return `/${ulyTokenToIpa(option.entry.token)}/ · ${option.entry.kind}`;
+}
+
+function promptBadge(
+  mode: QuizMode,
+  item: QuizItem,
+  answered: boolean,
+) {
+  if (mode === 'shape' && !answered) return 'which shape?';
+  if (mode === 'script' && !answered) {
+    return `pick ${UEY_JOINING_FORM_LABELS[item.form]}`;
+  }
+  return UEY_JOINING_FORM_LABELS[item.form];
+}
+
+function questionHint(mode: QuizMode, item: QuizItem) {
+  if (mode === 'shape') return `Pick the shape used by ${item.entry.token}.`;
+  if (mode === 'script') return 'Pick the matching UEY form.';
+  return 'Pick the matching ULY letter or digraph.';
+}
+
+function quizItemId(item: QuizItem) {
+  return `${item.entry.token}:${item.form}`;
 }
 
 function formClass(form: UeyJoiningForm) {
