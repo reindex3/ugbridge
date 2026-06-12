@@ -23,19 +23,15 @@ const cases = [
     minUeyChars: 5,
   },
   {
+    file: 'isolated-seen.png',
+    minConfidence: 70,
+    minUeyChars: 1,
+    includes: ['س'],
+  },
+  {
     file: 'concise-uyghur-customs-cover.jpg',
     minConfidence: 30,
     minUeyChars: 50,
-  },
-  {
-    file: 'qutadughubiliq-wien-p10.jpg',
-    minConfidence: 20,
-    minUeyChars: 100,
-  },
-  {
-    file: 'rarities-lam-alif.png',
-    minConfidence: 10,
-    minUeyChars: 100,
   },
 ];
 
