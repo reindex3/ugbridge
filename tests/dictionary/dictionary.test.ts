@@ -442,6 +442,22 @@ describe('suggestDictionary', () => {
     expect(suggestions).toEqual([]);
   });
 
+  it('does not run fuzzy suggestions across large static entry sets', () => {
+    const suggestions = suggestDictionary(
+      'boook',
+      Array.from({ length: 2001 }, (_, index) => ({
+        id: `static-entry-${index}`,
+        uey: `كىتاب-${index}`,
+        uly: `kitab-${index}`,
+        ipa: '',
+        partOfSpeech: 'translation',
+        definitions: ['book'],
+      })),
+    );
+
+    expect(suggestions).toEqual([]);
+  });
+
   it('can limit suggestions to English definitions', () => {
     const [suggestion] = suggestDictionary('goo', undefined, 'english');
     expect(suggestion.value).toBe('good');
@@ -511,7 +527,7 @@ describe('loadStaticDictionaryEntries', () => {
 
     const result = await loadStaticDictionaryEntries('élik', 'auto');
 
-    expect(result.entries.map((entry) => entry.uly)).toEqual(['élik', 'ellik']);
+    expect(result.entries.map((entry) => entry.uly)).toEqual(['élik']);
     expect(result.loadedShardCount).toBe(3);
     expect(fetchMock).toHaveBeenCalledWith('/dictionary/shards/english-e.json');
     expect(fetchMock).toHaveBeenCalledWith('/dictionary/shards/uly-e.json');
@@ -642,8 +658,8 @@ describe('loadStaticDictionaryEntries', () => {
       }
 
       return jsonResponse([
-        ['موللاق', 'mollaq', ['a somersault', 'head-over-heels']],
-        ['مونچاق', 'monchaq', ['necklace', 'torque', 'a pearl']],
+        ['يەر', 'yer', ['earth']],
+        ['ماشىنا', 'mashina', ['engine']],
       ]);
     });
 
@@ -787,9 +803,31 @@ describe('loadStaticDictionaryEntries', () => {
   });
 });
 
+describe('build_dictionary_dataset', () => {
+  it('strips parenthetical Uyghur headword notes before sharding', async () => {
+    const { cleanHeadword } = await importBuildDictionaryScript();
+
+    expect(cleanHeadword('رەھمەت (ياپون تىلى)')).toBe('رەھمەت');
+    expect(cleanHeadword('رەھمەت (ياپون تىلى')).toBe('رەھمەت');
+    expect(cleanHeadword('ئازراق （ ساناش مۇمكىن بولغان ئىسىملارغا ئىشلىتىلىدۇ')).toBe(
+      'ئازراق',
+    );
+    expect(cleanHeadword('ئايلاندۇرۇپ ئورىماق ）ئۆتكەن زامان تارماق شەكلى')).toBe(
+      'ئايلاندۇرۇپ ئورىماق ئۆتكەن زامان تارماق شەكلى',
+    );
+  });
+});
+
 async function importStaticDictionary() {
   vi.resetModules();
   return import('../../src/lib/dictionary/static-dataset');
+}
+
+async function importBuildDictionaryScript() {
+  // @ts-ignore The dataset builder is a plain ESM script, not TypeScript.
+  return import('../../scripts/build_dictionary_dataset.mjs') as Promise<{
+    cleanHeadword: (value: string) => string;
+  }>;
 }
 
 function testManifest() {

@@ -21,11 +21,16 @@ interface DictionaryLookupState {
   error: string | null;
 }
 
+const STATIC_LOOKUP_DEBOUNCE_MS = 180;
+const MIN_STATIC_LOOKUP_QUERY_LENGTH = 3;
+const EMPTY_STATIC_ENTRIES: readonly DictionaryEntry[] = [];
+
 export function useDictionaryLookup(
   query: string,
   searchMode: DictionarySearchMode,
 ): DictionaryLookupState {
   const [staticEntries, setStaticEntries] = useState<DictionaryEntry[]>([]);
+  const [staticEntriesKey, setStaticEntriesKey] = useState('');
   const [entryCount, setEntryCount] = useState(DICTIONARY_ENTRIES.length);
   const [definitionCount, setDefinitionCount] = useState(
     DICTIONARY_ENTRIES.reduce(
@@ -54,9 +59,14 @@ export function useDictionaryLookup(
   useEffect(() => {
     let isCurrent = true;
     const trimmedQuery = query.trim();
+    const lookupKey = getLookupKey(trimmedQuery, searchMode);
 
-    if (!trimmedQuery) {
+    if (
+      !trimmedQuery ||
+      trimmedQuery.length < MIN_STATIC_LOOKUP_QUERY_LENGTH
+    ) {
       setStaticEntries([]);
+      setStaticEntriesKey('');
       setLoadedShardCount(0);
       setIsLoading(false);
       setError(null);
@@ -68,34 +78,47 @@ export function useDictionaryLookup(
     setIsLoading(true);
     setError(null);
 
-    loadStaticDictionaryEntries(trimmedQuery, searchMode)
-      .then((result) => {
-        if (!isCurrent) return;
-        setStaticEntries(result.entries);
-        setLoadedShardCount(result.loadedShardCount);
-        if (result.manifest) {
-          setEntryCount(result.manifest.entryCount);
-          setDefinitionCount(result.manifest.definitionCount);
-        }
-      })
-      .catch((loadError: unknown) => {
-        if (!isCurrent) return;
-        setStaticEntries([]);
-        setLoadedShardCount(0);
-        setError(loadError instanceof Error ? loadError.message : 'Dictionary load failed');
-      })
-      .finally(() => {
-        if (isCurrent) setIsLoading(false);
-      });
+    const timeoutId = window.setTimeout(() => {
+      loadStaticDictionaryEntries(trimmedQuery, searchMode)
+        .then((result) => {
+          if (!isCurrent) return;
+          setStaticEntries(result.entries);
+          setStaticEntriesKey(lookupKey);
+          setLoadedShardCount(result.loadedShardCount);
+          if (result.manifest) {
+            setEntryCount(result.manifest.entryCount);
+            setDefinitionCount(result.manifest.definitionCount);
+          }
+        })
+        .catch((loadError: unknown) => {
+          if (!isCurrent) return;
+          setStaticEntries([]);
+          setStaticEntriesKey('');
+          setLoadedShardCount(0);
+          setError(
+            loadError instanceof Error
+              ? loadError.message
+              : 'Dictionary load failed',
+          );
+        })
+        .finally(() => {
+          if (isCurrent) setIsLoading(false);
+        });
+    }, STATIC_LOOKUP_DEBOUNCE_MS);
 
     return () => {
       isCurrent = false;
+      window.clearTimeout(timeoutId);
     };
   }, [query, searchMode]);
 
+  const trimmedQuery = query.trim();
+  const lookupKey = getLookupKey(trimmedQuery, searchMode);
+  const activeStaticEntries =
+    staticEntriesKey === lookupKey ? staticEntries : EMPTY_STATIC_ENTRIES;
   const entries = useMemo(
-    () => mergeEntries(DICTIONARY_ENTRIES, staticEntries),
-    [staticEntries],
+    () => mergeEntries(DICTIONARY_ENTRIES, activeStaticEntries),
+    [activeStaticEntries],
   );
 
   const results = useMemo(
@@ -117,6 +140,10 @@ export function useDictionaryLookup(
     loadedShardCount,
     error,
   };
+}
+
+function getLookupKey(query: string, searchMode: DictionarySearchMode) {
+  return query ? `${searchMode}:${query}` : '';
 }
 
 function mergeEntries(

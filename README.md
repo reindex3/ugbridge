@@ -218,22 +218,25 @@ The build script imports the English ⇄ Uyghur files:
 - `ug-en.jsonl`
 - `en-ug.jsonl`
 
-and generates static JSON shards under `public/dictionary/`.
+and generates cleaned static JSON shards under `public/dictionary/`. During
+generation, parenthetical Uyghur headword annotations are stripped so
+descriptive notes do not become searchable headwords.
 
 ```bash
 npm run dictionary:build
 ```
 
 Generated data is committed so Firebase Hosting can serve it directly. The app
-does not download the whole dictionary on page load; it lazy-loads only the
-relevant shard for the active query and search mode. Manifest and shard fetches
-are cached after successful loads, while transient failures are left retryable
-so a temporary network error does not poison the session.
+does not download the whole dictionary on page load; it debounces static lookup,
+lazy-loads only the relevant shard for the active query and search mode, and
+keeps only query-matching candidates in memory. Manifest and shard fetches are
+cached after successful loads, while transient failures are left retryable so a
+temporary network error does not poison the session.
 
 Current generated size:
 
-- about 350k Uyghur headwords
-- about 725k English definitions
+- about 343k Uyghur headwords
+- about 721k English definitions
 
 ## Reader and OCR
 

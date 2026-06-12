@@ -67,21 +67,6 @@ function rankEntry(
 ): DictionarySearchResult | null {
   const uly = normalizeQuery(entry.uly);
   const uey = normalizeQuery(entry.uey);
-  const exactDefinition = entry.definitions.find(
-    (definition) => normalizeQuery(definition) === normalized,
-  );
-  const prefixDefinition = entry.definitions.find((definition) =>
-    normalizeQuery(definition).startsWith(normalized),
-  );
-  const includedDefinition = entry.definitions.find((definition) =>
-    normalizeQuery(definition).includes(normalized),
-  );
-  const includedExample = entry.examples?.find((example) =>
-    (mode === 'english'
-      ? [example.english]
-      : [example.uey, example.uly, example.english]
-    ).some((value) => normalizeQuery(value).includes(normalized)),
-  );
   const entryPenalty = getEntryRankPenalty(entry);
   const definitionPenalty =
     Math.min(entry.definitions.length, 12) / 100 + entryPenalty;
@@ -110,6 +95,10 @@ function rankEntry(
       matchedText: entry.uey,
     };
   }
+  const exactDefinition =
+    mode !== 'uey' && mode !== 'uly'
+      ? findDefinition(entry, (definition) => definition === normalized)
+      : undefined;
   if (mode !== 'uey' && mode !== 'uly' && exactDefinition) {
     return {
       entry,
@@ -142,6 +131,10 @@ function rankEntry(
       matchedText: entry.uey,
     };
   }
+  const prefixDefinition =
+    mode !== 'uey' && mode !== 'uly'
+      ? findDefinition(entry, (definition) => definition.startsWith(normalized))
+      : undefined;
   if (mode !== 'uey' && mode !== 'uly' && prefixDefinition) {
     return {
       entry,
@@ -174,6 +167,10 @@ function rankEntry(
       matchedText: entry.uey,
     };
   }
+  const includedDefinition =
+    mode !== 'uey' && mode !== 'uly'
+      ? findDefinition(entry, (definition) => definition.includes(normalized))
+      : undefined;
   if (mode !== 'uey' && mode !== 'uly' && includedDefinition) {
     return {
       entry,
@@ -182,6 +179,12 @@ function rankEntry(
       matchedText: includedDefinition,
     };
   }
+  const includedExample = entry.examples?.find((example) =>
+    (mode === 'english'
+      ? [example.english]
+      : [example.uey, example.uly, example.english]
+    ).some((value) => normalizeQuery(value).includes(normalized)),
+  );
   if (mode !== 'uey' && mode !== 'uly' && includedExample) {
     return {
       entry,
@@ -192,6 +195,17 @@ function rankEntry(
   }
 
   return null;
+}
+
+function findDefinition(
+  entry: DictionaryEntry,
+  matches: (definition: string) => boolean,
+) {
+  for (const definition of entry.definitions) {
+    if (matches(normalizeQuery(definition))) return definition;
+  }
+
+  return undefined;
 }
 
 function matchesQuery(value: string, normalized: string, fallback: string) {

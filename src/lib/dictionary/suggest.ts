@@ -16,6 +16,7 @@ const MAX_SUGGESTIONS = 6;
 const ULY_HINT_RE = /(?:gh|ng|sh|ch|zh|[éëöü'’‘ʼ])/i;
 const MIN_FUZZY_QUERY_LENGTH = 3;
 const MAX_FUZZY_QUERY_LENGTH = 24;
+const MAX_FUZZY_STATIC_ENTRY_COUNT = 2000;
 
 export function suggestDictionary(
   query: string,
@@ -31,9 +32,17 @@ export function suggestDictionary(
     searchMode === 'uey' || ULY_HINT_RE.test(query)
       ? normalizeQuery(ulyToUey(query))
       : '';
+  const canFuzzyStaticEntries = entries.length <= MAX_FUZZY_STATIC_ENTRY_COUNT;
   const suggestions = entries
     .flatMap((entry) =>
-      rankSuggestions(entry, normalized, queryAsUly, queryAsUey, searchMode),
+      rankSuggestions(
+        entry,
+        normalized,
+        queryAsUly,
+        queryAsUey,
+        searchMode,
+        canFuzzyStaticEntries || !entry.id.startsWith('static-'),
+      ),
     )
     .sort((a, b) => a.score - b.score || a.value.localeCompare(b.value));
 
@@ -57,6 +66,7 @@ function rankSuggestions(
   queryAsUly: string,
   queryAsUey: string,
   mode: DictionarySearchMode,
+  allowFuzzy: boolean,
 ): DictionarySuggestion[] {
   const suggestions: DictionarySuggestion[] = [];
   const uly = normalizeQuery(entry.uly);
@@ -74,7 +84,7 @@ function rankSuggestions(
     includesQuery(uly, normalized, queryAsUly)
   ) {
     suggestions.push({ entry, value: entry.uly, matchedOn: 'uly', score: 3 });
-  } else if (mode !== 'english' && mode !== 'uey') {
+  } else if (mode !== 'english' && mode !== 'uey' && allowFuzzy) {
     const distance = nearMatchDistance(uly, normalized, queryAsUly);
     if (distance !== null) {
       suggestions.push({
@@ -118,7 +128,7 @@ function rankSuggestions(
         matchedOn: 'definition',
         score: 5,
       });
-    } else {
+    } else if (allowFuzzy) {
       const distance = nearDefinitionDistance(normalizedDefinition, normalized);
       if (distance !== null) {
         suggestions.push({

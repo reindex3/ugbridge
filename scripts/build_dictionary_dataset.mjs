@@ -8,7 +8,7 @@ import {
   writeFileSync,
 } from 'node:fs';
 import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { pipeline } from 'node:stream/promises';
 import { createInterface } from 'node:readline';
 import https from 'node:https';
@@ -32,7 +32,12 @@ const CHINESE_RE = /[\u3400-\u9fff]/;
 const TAG_RE = /<[^>]+>/g;
 const HTML_ENTITY_RE = /&(?:[a-z]+|#\d+);/i;
 
-await main();
+if (
+  process.argv[1] &&
+  import.meta.url === pathToFileURL(process.argv[1]).href
+) {
+  await main();
+}
 
 async function main() {
   mkdirSync(cacheDir, { recursive: true });
@@ -297,8 +302,11 @@ function addPair(definitionsByUey, uey, english) {
   definitionsByUey.set(cleanedUey, definitions);
 }
 
-function cleanHeadword(value) {
+export function cleanHeadword(value) {
   return cleanText(value)
+    .replace(/[（(][^）)]*[）)]/g, ' ')
+    .replace(/[（(][^）)]*$/g, ' ')
+    .replace(/[()（）]/g, ' ')
     .replace(/^[^\u0600-\u06ff]+/u, '')
     .replace(/[^\u0600-\u06ff\s،؛؟-]+$/u, '')
     .replace(/\s+/g, ' ')

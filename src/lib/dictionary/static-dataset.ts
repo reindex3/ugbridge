@@ -49,7 +49,11 @@ export async function loadStaticDictionaryEntries(
 
   const shardFiles = getShardFiles(manifest, query, mode);
   const shardEntries = await Promise.all(shardFiles.map(loadShard));
-  const entries = dedupeEntries(shardEntries.flat());
+  const entries = filterEntriesForQuery(
+    dedupeEntries(shardEntries.flat()),
+    query,
+    mode,
+  );
 
   return {
     entries,
@@ -167,6 +171,54 @@ function dedupeEntries(entries: DictionaryEntry[]) {
   }
 
   return unique;
+}
+
+function filterEntriesForQuery(
+  entries: DictionaryEntry[],
+  query: string,
+  mode?: DictionarySearchMode,
+) {
+  const searchMode = normalizeDictionarySearchMode(mode);
+  const normalized = normalizeQuery(query);
+  const queryAsUly = normalizeQuery(ueyToUly(query));
+  const queryAsUey = normalizeQuery(ulyToUey(query));
+
+  return entries.filter((entry) => {
+    const uly = normalizeQuery(entry.uly);
+    const uey = normalizeQuery(entry.uey);
+
+    if (
+      searchMode !== 'english' &&
+      searchMode !== 'uey' &&
+      includesQuery(uly, normalized, queryAsUly)
+    ) {
+      return true;
+    }
+
+    if (
+      searchMode !== 'english' &&
+      searchMode !== 'uly' &&
+      includesQuery(uey, normalized, queryAsUey)
+    ) {
+      return true;
+    }
+
+    if (searchMode === 'uey' || searchMode === 'uly') return false;
+
+    return entry.definitions.some((definition) => {
+      const normalizedDefinition = normalizeQuery(definition);
+      return normalized.length < 3
+        ? normalizedDefinition.startsWith(normalized)
+        : normalizedDefinition.includes(normalized);
+    });
+  });
+}
+
+function includesQuery(value: string, normalized: string, fallback: string) {
+  return (
+    value.includes(normalized) ||
+    Boolean(fallback && value.includes(fallback))
+  );
 }
 
 function bucketForLatin(value: string) {
