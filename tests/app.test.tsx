@@ -59,7 +59,7 @@ describe('App conversion workflow', () => {
     );
   });
 
-  it('opens a shared reader URL with its text restored', () => {
+  it('opens a shared reader URL with its text restored', async () => {
     window.history.pushState(
       {},
       '',
@@ -71,6 +71,8 @@ describe('App conversion workflow', () => {
     expect(screen.getAllByText('Reader').length).toBeGreaterThan(0);
     expect(screen.getByLabelText('Reader text')).toHaveValue('سالام كىتاب');
     expect(screen.getAllByText('salam kitab').length).toBeGreaterThan(0);
+    expect(await screen.findByText('hello')).toBeInTheDocument();
+    expect(await screen.findByText('book')).toBeInTheDocument();
   });
 
   it('detects strong ULY input and converts it to UEY', () => {

@@ -105,6 +105,19 @@ async function loadCandidateMatch(candidate: ReaderLookupCandidate) {
   let loadedShardCount = 0;
 
   for (const query of candidate.queries) {
+    const seedResults = searchDictionary(query, DICTIONARY_ENTRIES, 'uly');
+    if (seedResults.length) {
+      return {
+        loadedShardCount,
+        match: {
+          candidate,
+          query,
+          results: seedResults.slice(0, 3),
+          isRootFallback: query !== candidate.queries[0],
+        },
+      };
+    }
+
     const staticResult = await loadStaticDictionaryEntries(query, 'uly');
     loadedShardCount += staticResult.loadedShardCount;
     const entries = mergeEntries(DICTIONARY_ENTRIES, staticResult.entries);
