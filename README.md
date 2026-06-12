@@ -101,6 +101,7 @@ npm run test:watch       # watch tests
 npm run typecheck        # TypeScript check
 npm run build            # production build in dist/
 npm run smoke:lightpanda # Lightpanda smoke check for core browser flows
+npm run ocr:fixtures     # Tesseract.js smoke check against local UEY images
 npm run preview          # preview production build
 npm run deploy           # build + deploy to Firebase Hosting
 npm run dictionary:build # rebuild generated dictionary shards
@@ -139,7 +140,8 @@ src/
 ├── main.tsx
 └── index.css
 
-tests/                       # Vitest specs
+tests/                       # Vitest specs and test fixtures
+└── fixtures/ocr/uey/        # local UEY images for OCR smoke checks
 public/
 ├── dictionary/              # generated static dictionary shards
 ├── fonts/                   # bundled webfont assets and attribution
@@ -148,7 +150,10 @@ public/
 └── sw.js
 
 scripts/
-└── build_dictionary_dataset.mjs
+├── build_dictionary_dataset.mjs
+├── lightpanda_smoke.mjs
+├── mms_tts_server.py
+└── ocr_fixture_smoke.mjs
 
 firebase.json
 .firebaserc
@@ -236,6 +241,12 @@ not serve the OCR model file.
 
 OCR output is treated as a draft: the recognized UEY text lands in the editable
 Reader text area before conversion, dictionary matching, study, or speech.
+
+The repo includes a small set of pure UEY image fixtures under
+`tests/fixtures/ocr/uey/`. Run `npm run ocr:fixtures` to confirm Tesseract.js can
+load the `uig` traineddata model and still extract Arabic-script text from
+multiple sample styles. These fixtures are only for development smoke checks and
+are not shipped as app assets.
 
 ## Fonts
 
