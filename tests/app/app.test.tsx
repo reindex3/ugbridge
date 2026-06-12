@@ -339,6 +339,18 @@ describe('App conversion workflow', () => {
     expect(screen.getByLabelText('Dictionary search')).toBeInTheDocument();
   });
 
+  it('links to the project Ko-fi page for support', () => {
+    render(<App />);
+
+    expect(screen.getByRole('link', { name: 'Support' })).toHaveAttribute(
+      'href',
+      'https://ko-fi.com/reindex33',
+    );
+    expect(
+      screen.getByRole('link', { name: 'Support UG Bridge' }),
+    ).toHaveAttribute('href', 'https://ko-fi.com/reindex33');
+  });
+
   it('shows local study profile data on the home page', () => {
     window.localStorage.setItem(
       'ugbridge.dictionary.lookups.v1',

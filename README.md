@@ -330,6 +330,13 @@ guidance.
 Firebase Web `apiKey` values are public project identifiers, not secrets.
 Real access must be protected with Firebase Security Rules and Authentication.
 
+## Support
+
+UG Bridge links to the project Ko-fi page at
+[`ko-fi.com/reindex33`](https://ko-fi.com/reindex33) from the header and
+footer. This is only an external support link; the app does not process
+payments or store payment details.
+
 ## Privacy and Data
 
 Core conversion, Reader analysis, dictionary lookup, study tools, custom words,

@@ -11,6 +11,7 @@ import {
   FileImage,
   Files,
   GraduationCap,
+  Heart,
   History,
   Home,
   Languages,
@@ -88,6 +89,8 @@ import {
 import { analyzeReaderText } from './lib/reader';
 
 type Direction = 'uey-to-uly' | 'uly-to-uey';
+
+const SUPPORT_URL = 'https://ko-fi.com/reindex33';
 type View =
   | 'home'
   | 'convert'
@@ -529,6 +532,7 @@ export default function App() {
           <div className="flex flex-col gap-3 md:items-end">
             <div className="flex flex-wrap items-center gap-2 md:justify-end">
               <ThemeToggle mode={themeMode} onChange={setThemeMode} />
+              <SupportLink />
               <GitHubLink />
             </div>
             <AppTabs
@@ -1168,6 +1172,15 @@ function HomeFooter() {
 
       <div className="flex flex-wrap gap-2 md:justify-end">
         <a
+          href={SUPPORT_URL}
+          target="_blank"
+          rel="noreferrer"
+          className={FOOTER_LINK_CLASS}
+        >
+          <Heart className="size-4" aria-hidden="true" />
+          Support UG Bridge
+        </a>
+        <a
           href="https://github.com/reindex3/ugbridge/issues/new"
           target="_blank"
           rel="noreferrer"
@@ -1621,6 +1634,20 @@ function GitHubLink() {
     >
       <GitHubIcon className="h-4 w-4" />
       GitHub
+    </a>
+  );
+}
+
+function SupportLink() {
+  return (
+    <a
+      href={SUPPORT_URL}
+      target="_blank"
+      rel="noreferrer"
+      className="inline-flex items-center gap-2 self-start rounded-full border border-rose-200 bg-rose-50 px-3 py-2 text-sm font-semibold text-rose-700 shadow-xs transition hover:border-rose-300 hover:bg-rose-100 md:self-end"
+    >
+      <Heart className="h-4 w-4" aria-hidden="true" />
+      Support
     </a>
   );
 }
