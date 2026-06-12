@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   detectConversionDirection,
   getConversionQualityHints,
-} from '../src/lib/converter';
+} from '../../src/lib/converter';
 
 describe('conversion quality hints', () => {
   it('flags mixed UEY and Latin text', () => {

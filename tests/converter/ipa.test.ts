@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ulyToIpa, ulyTokenToIpa } from '../src/lib/converter';
+import { ulyToIpa, ulyTokenToIpa } from '../../src/lib/converter';
 
 describe('ulyToIpa', () => {
   it('returns empty string for empty input', () => {

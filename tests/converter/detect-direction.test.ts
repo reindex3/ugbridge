@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { detectConversionDirection } from '../src/lib/converter';
+import { detectConversionDirection } from '../../src/lib/converter';
 
 describe('detectConversionDirection', () => {
   it('returns none for empty input', () => {

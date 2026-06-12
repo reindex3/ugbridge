@@ -15,8 +15,8 @@ import {
   saveDictionaryLookups,
   saveQuizProgress,
   saveStudyProgress,
-} from '../src/lib/local-profile';
-import type { DictionaryEntry } from '../src/lib/dictionary';
+} from '../../src/lib/local-profile';
+import type { DictionaryEntry } from '../../src/lib/dictionary';
 
 const yaxshiEntry: DictionaryEntry = {
   id: 'yaxshi',

@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
-import { AlphabetPanel } from '../src/components/AlphabetPanel';
+import { AlphabetPanel } from '../../src/components/AlphabetPanel';
 
 describe('AlphabetPanel', () => {
   it('renders a word-initial vowel carrier and vowel as one highlighted segment', () => {

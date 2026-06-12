@@ -1,7 +1,7 @@
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import { useState } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { TextInput } from '../src/components/TextInput';
+import { TextInput } from '../../src/components/TextInput';
 
 describe('TextInput', () => {
   let rafCallbacks: FrameRequestCallback[];

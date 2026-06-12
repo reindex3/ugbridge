@@ -1,7 +1,7 @@
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { LearnPanel } from '../src/components/LearnPanel';
-import { traceConversion } from '../src/lib/converter';
+import { LearnPanel } from '../../src/components/LearnPanel';
+import { traceConversion } from '../../src/lib/converter';
 
 describe('LearnPanel', () => {
   beforeEach(() => {

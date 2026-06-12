@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { getSpeakableUeyText } from '../src/lib/tts/speakable-text';
+import { getSpeakableUeyText } from '../../src/lib/tts/speakable-text';
 
 describe('getSpeakableUeyText', () => {
   it('keeps UEY input for UEY to ULY conversion', () => {

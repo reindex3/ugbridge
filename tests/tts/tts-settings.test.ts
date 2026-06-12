@@ -3,7 +3,7 @@ import {
   DEFAULT_TTS_SETTINGS,
   DEFAULT_TTS_VOICE,
   normalizeTtsSettings,
-} from '../src/lib/tts/settings';
+} from '../../src/lib/tts/settings';
 
 describe('TTS settings', () => {
   it('falls back to browser mode for empty values', () => {

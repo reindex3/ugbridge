@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   searchDictionary,
   suggestDictionary,
-} from '../src/lib/dictionary';
+} from '../../src/lib/dictionary';
 
 describe('searchDictionary', () => {
   it('returns no results for empty queries', () => {
@@ -449,7 +449,7 @@ describe('loadStaticDictionaryEntries', () => {
 
 async function importStaticDictionary() {
   vi.resetModules();
-  return import('../src/lib/dictionary/static-dataset');
+  return import('../../src/lib/dictionary/static-dataset');
 }
 
 function testManifest() {

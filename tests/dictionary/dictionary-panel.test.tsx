@@ -1,17 +1,17 @@
 import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { DictionaryPanel } from '../src/components/DictionaryPanel';
+import { DictionaryPanel } from '../../src/components/DictionaryPanel';
 import type {
   DictionaryEntry,
   DictionarySearchResult,
   DictionarySuggestion,
-} from '../src/lib/dictionary';
+} from '../../src/lib/dictionary';
 
 const { useDictionaryLookupMock } = vi.hoisted(() => ({
   useDictionaryLookupMock: vi.fn(),
 }));
 
-vi.mock('../src/hooks/useDictionaryLookup', () => ({
+vi.mock('../../src/hooks/useDictionaryLookup', () => ({
   useDictionaryLookup: useDictionaryLookupMock,
 }));
 

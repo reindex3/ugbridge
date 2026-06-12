@@ -4,7 +4,7 @@ import {
   detectReaderScript,
   getUlyLookupQueries,
   tokenizeReaderText,
-} from '../src/lib/reader';
+} from '../../src/lib/reader';
 
 describe('analyzeReaderText', () => {
   it('builds ULY text and lookup candidates from UEY input', () => {

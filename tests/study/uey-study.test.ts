@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildUlyToUeyStudy, traceUlyToUey } from '../src/lib/converter';
+import { buildUlyToUeyStudy, traceUlyToUey } from '../../src/lib/converter';
 
 describe('UEY study model', () => {
   it('splits UEY letters and keeps their matching ULY source', () => {

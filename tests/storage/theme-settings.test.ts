@@ -6,7 +6,7 @@ import {
   normalizeThemeMode,
   resolveThemeMode,
   saveThemeMode,
-} from '../src/lib/theme-settings';
+} from '../../src/lib/theme-settings';
 
 describe('theme settings', () => {
   beforeEach(() => {

@@ -1,6 +1,6 @@
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import App from '../src/App';
+import App from '../../src/App';
 
 describe('App conversion workflow', () => {
   beforeEach(() => {

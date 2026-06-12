@@ -1,11 +1,11 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { TtsSettingsPanel } from '../src/components/TtsSettingsPanel';
+import { TtsSettingsPanel } from '../../src/components/TtsSettingsPanel';
 import {
   DEFAULT_TTS_SETTINGS,
   DEFAULT_TTS_VOICE,
   type TtsSettings,
-} from '../src/lib/tts/settings';
+} from '../../src/lib/tts/settings';
 
 describe('TtsSettingsPanel', () => {
   beforeEach(() => {

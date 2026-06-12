@@ -4,7 +4,7 @@ import {
   applyCustomTransliterations,
   normalizeCustomTransliterations,
   type CustomTransliterationEntry,
-} from '../src/lib/custom-transliterations';
+} from '../../src/lib/custom-transliterations';
 
 describe('custom transliterations', () => {
   it('normalizes invalid stored values to an empty list', () => {

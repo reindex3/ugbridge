@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { ulyToUey, ueyToUly } from '../src/lib/converter';
+import { ulyToUey, ueyToUly } from '../../src/lib/converter';
 
 describe('ulyToUey', () => {
   it('returns empty string for empty input', () => {

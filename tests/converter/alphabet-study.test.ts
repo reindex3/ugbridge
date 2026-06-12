@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   ALPHABET_STUDY_ENTRIES,
   UEY_LETTER_FORMS,
-} from '../src/lib/converter';
+} from '../../src/lib/converter';
 
 describe('ALPHABET_STUDY_ENTRIES', () => {
   it('includes letters and digraphs with IPA-backed examples', () => {

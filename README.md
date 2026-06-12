@@ -140,8 +140,16 @@ src/
 ├── main.tsx
 └── index.css
 
-tests/                       # Vitest specs and test fixtures
-└── fixtures/ocr/uey/        # local UEY images for OCR smoke checks
+tests/                       # Vitest specs grouped by product area
+├── app/                     # full app workflow tests
+├── converter/               # pure UEY/ULY conversion tests
+├── dictionary/              # dictionary search and panel tests
+├── fixtures/ocr/uey/        # local UEY images for OCR smoke checks
+├── reader/                  # Reader text-analysis tests
+├── storage/                 # browser-local persistence helpers
+├── study/                   # Learn, Alphabet, and Quiz tests
+├── tts/                     # TTS settings, providers, and speak controls
+└── ui/                      # shared input/output component tests
 public/
 ├── dictionary/              # generated static dictionary shards
 ├── fonts/                   # bundled webfont assets and attribution

@@ -3,7 +3,7 @@ import {
   addConversionHistoryEntry,
   type ConversionHistoryEntry,
   normalizeConversionHistory,
-} from '../src/lib/conversion-history';
+} from '../../src/lib/conversion-history';
 
 describe('conversion history', () => {
   it('normalizes invalid stored values to an empty list', () => {

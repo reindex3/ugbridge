@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
-import { useTtsStatus } from '../src/hooks/useTtsStatus';
-import type { TtsProvider } from '../src/lib/tts';
+import { useTtsStatus } from '../../src/hooks/useTtsStatus';
+import type { TtsProvider } from '../../src/lib/tts';
 
 describe('useTtsStatus', () => {
   it('treats failed voice detection as no Uyghur voice', async () => {

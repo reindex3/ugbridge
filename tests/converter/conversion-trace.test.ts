@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { traceUeyToUly, traceUlyToUey } from '../src/lib/converter';
+import { traceUeyToUly, traceUlyToUey } from '../../src/lib/converter';
 
 describe('conversion trace', () => {
   it('marks word-initial vowels with hamza', () => {

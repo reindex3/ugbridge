@@ -1,7 +1,7 @@
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
-import { SpeakButton } from '../src/components/SpeakButton';
-import type { TtsProvider } from '../src/lib/tts';
+import { SpeakButton } from '../../src/components/SpeakButton';
+import type { TtsProvider } from '../../src/lib/tts';
 
 describe('SpeakButton', () => {
   it('stays disabled when there is no speakable text or TTS is unavailable', () => {

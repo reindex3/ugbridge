@@ -1,6 +1,6 @@
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { ConversionOutput } from '../src/components/ConversionOutput';
+import { ConversionOutput } from '../../src/components/ConversionOutput';
 
 describe('ConversionOutput', () => {
   beforeEach(() => {

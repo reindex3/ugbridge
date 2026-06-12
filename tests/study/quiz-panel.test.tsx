@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { QuizPanel } from '../src/components/QuizPanel';
-import { ALPHABET_STUDY_ENTRIES } from '../src/lib/converter';
+import { QuizPanel } from '../../src/components/QuizPanel';
+import { ALPHABET_STUDY_ENTRIES } from '../../src/lib/converter';
 
 const LEARN_PROGRESS_KEY = 'ugbridge.learnedLetters.v1';
 const QUIZ_PROGRESS_KEY = 'ugbridge.quiz.progress.v1';
