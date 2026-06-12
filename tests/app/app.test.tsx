@@ -370,6 +370,32 @@ describe('App conversion workflow', () => {
     });
   });
 
+  it('draws a compact Ko-fi floating widget when the overlay is ready', async () => {
+    const draw = vi.fn();
+    (
+      window as Window & {
+        kofiWidgetOverlay?: {
+          draw: ReturnType<typeof vi.fn>;
+        };
+      }
+    ).kofiWidgetOverlay = { draw };
+
+    render(<App />);
+
+    await waitFor(() => {
+      expect(draw).toHaveBeenCalledWith(
+        'reindex33',
+        expect.objectContaining({
+          type: 'floating-chat',
+          'floating-chat.cssId': 'ugbridge-kofi',
+          'floating-chat.donateButton.text': 'Support',
+          'floating-chat.donateButton.background-color': '#72a4f2',
+          'floating-chat.donateButton.text-color': '#ffffff',
+        }),
+      );
+    });
+  });
+
   it('shows local study profile data on the home page', () => {
     window.localStorage.setItem(
       'ugbridge.dictionary.lookups.v1',

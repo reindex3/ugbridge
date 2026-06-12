@@ -332,10 +332,10 @@ Real access must be protected with Firebase Security Rules and Authentication.
 
 ## Support
 
-UG Bridge uses Ko-fi's official floating support widget for the project page at
-[`ko-fi.com/reindex33`](https://ko-fi.com/reindex33). The footer keeps a plain
-Ko-fi link as a fallback. UG Bridge does not process payments or store payment
-details.
+UG Bridge uses Ko-fi's official compact floating support widget, anchored to
+the bottom-right of the page, for [`ko-fi.com/reindex33`](https://ko-fi.com/reindex33).
+The footer keeps a plain Ko-fi link as a fallback. UG Bridge does not process
+payments or store payment details.
 
 ## Privacy and Data
 

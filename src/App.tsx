@@ -94,7 +94,8 @@ const KOFI_PAGE_ID = 'reindex33';
 const SUPPORT_URL = 'https://ko-fi.com/reindex33';
 const KOFI_WIDGET_SCRIPT_URL =
   'https://storage.ko-fi.com/cdn/scripts/overlay-widget.js';
-const KOFI_WIDGET_BUTTON_TEXT = 'Support me on Ko-fi';
+const KOFI_WIDGET_CSS_ID = 'ugbridge-kofi';
+const KOFI_WIDGET_BUTTON_TEXT = 'Support';
 const KOFI_WIDGET_COLOR = '#72a4f2';
 
 declare global {
@@ -1661,6 +1662,7 @@ function KoFiOverlayWidget() {
 
       window.kofiWidgetOverlay.draw(KOFI_PAGE_ID, {
         type: 'floating-chat',
+        'floating-chat.cssId': KOFI_WIDGET_CSS_ID,
         'floating-chat.donateButton.text': KOFI_WIDGET_BUTTON_TEXT,
         'floating-chat.donateButton.background-color': KOFI_WIDGET_COLOR,
         'floating-chat.donateButton.text-color': '#ffffff',
