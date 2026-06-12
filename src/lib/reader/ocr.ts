@@ -11,9 +11,6 @@ export interface ReaderOcrResult {
   confidence: number;
 }
 
-const UYGHUR_TESSDATA_FAST =
-  'https://cdn.jsdelivr.net/gh/tesseract-ocr/tessdata_fast';
-
 let workerPromise: Promise<TesseractWorker> | null = null;
 let activeProgressHandler: ((progress: ReaderOcrProgress) => void) | null =
   null;
@@ -52,7 +49,6 @@ async function getReaderOcrWorker() {
 async function createReaderOcrWorker() {
   const tesseract = await import('tesseract.js');
   const worker = await tesseract.createWorker('uig', tesseract.OEM.LSTM_ONLY, {
-    langPath: UYGHUR_TESSDATA_FAST,
     logger: (message) => {
       activeProgressHandler?.({
         status: message.status,
