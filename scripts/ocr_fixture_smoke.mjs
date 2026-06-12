@@ -29,9 +29,20 @@ const cases = [
     includes: ['س'],
   },
   {
+    file: 'isolated-beh.png',
+    minConfidence: 70,
+    minUeyChars: 1,
+    includes: ['ب'],
+  },
+  {
     file: 'concise-uyghur-customs-cover.jpg',
     minConfidence: 30,
     minUeyChars: 50,
+  },
+  {
+    file: 'uyghur-names-dictionary-cover.jpg',
+    minConfidence: 30,
+    minUeyChars: 600,
   },
 ];
 
