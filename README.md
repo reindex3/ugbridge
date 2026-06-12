@@ -60,10 +60,10 @@
   word-initial hamza behavior, and Uyghur letter forms.
 - **Search offline dictionary data** from the home page or dictionary view by
   UEY, ULY, or English with suggestions, matched-text highlighting,
-  cross-script fallbacks, typo suggestions, recent searches, saved lookup
-  controls, dictionary favorites, clearer empty/no-result states, `?dict=`
-  share links, saved lookup records, copy actions, and lazy-loaded static
-  shards.
+  cross-script fallbacks, exact headword-first results, typo suggestions,
+  recent searches, saved lookup controls, dictionary favorites, clearer
+  empty/no-result states, `?dict=` share links, saved lookup records, copy
+  actions, and lazy-loaded static shards.
 - **Study and practice UEY** through vowel-highlighted letter breakdowns,
   alphabet pages, browser-shaped highlighted examples, connected joining-form
   samples, local word mastery/review state, letter progress, randomizable quiz

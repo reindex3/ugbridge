@@ -90,6 +90,45 @@ describe('searchDictionary', () => {
     expect(results[0].entry.id).toBe('exact');
     expect(results[0].matchedText).toBe('book');
   });
+
+  it('shows only exact headwords when long phrase matches share the same prefix', () => {
+    const results = searchDictionary('rehemet', [
+      {
+        id: 'phrase',
+        uey: 'رەھمەت ئېيتىپ قوبۇل قىلماسلىق',
+        uly: 'rehmet éytip qobul qilmasliq',
+        ipa: '',
+        partOfSpeech: 'phrase',
+        definitions: ['decline with thanks'],
+      },
+      {
+        id: 'exact',
+        uey: 'رەھمەت',
+        uly: 'rehmet',
+        ipa: '',
+        partOfSpeech: 'interjection',
+        definitions: ['thank you', 'thanks'],
+      },
+    ]);
+
+    expect(results.map((result) => result.entry.id)).toEqual(['exact']);
+    expect(results[0].matchedOn).toBe('uly');
+  });
+
+  it('falls back to phrase matches when no exact headword exists', () => {
+    const results = searchDictionary('rehemet', [
+      {
+        id: 'phrase',
+        uey: 'رەھمەت ئېيتىپ قوبۇل قىلماسلىق',
+        uly: 'rehmet éytip qobul qilmasliq',
+        ipa: '',
+        partOfSpeech: 'phrase',
+        definitions: ['decline with thanks'],
+      },
+    ]);
+
+    expect(results.map((result) => result.entry.id)).toEqual(['phrase']);
+  });
 });
 
 describe('suggestDictionary', () => {

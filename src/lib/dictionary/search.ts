@@ -14,6 +14,10 @@ export interface DictionarySearchResult {
 
 const MAX_RESULTS = 12;
 const ULY_HINT_RE = /(?:gh|ng|sh|ch|zh|[éëöü'’‘ʼ])/i;
+const COMMON_ULY_QUERY_ALIASES: Record<string, string> = {
+  rahmet: 'rehmet',
+  rehemet: 'rehmet',
+};
 
 export function searchDictionary(
   query: string,
@@ -24,7 +28,7 @@ export function searchDictionary(
   if (!normalized) return [];
 
   const searchMode = normalizeDictionarySearchMode(mode);
-  const queryAsUly = normalizeQuery(ueyToUly(query));
+  const queryAsUly = normalizeUlyQueryAlias(normalizeQuery(ueyToUly(query)));
   const queryAsUey =
     searchMode === 'uey' || ULY_HINT_RE.test(query)
       ? normalizeQuery(ulyToUey(query))
@@ -35,8 +39,14 @@ export function searchDictionary(
     )
     .filter((result): result is DictionarySearchResult => result !== null)
     .sort((a, b) => a.score - b.score || a.entry.uly.localeCompare(b.entry.uly));
+  const exactHeadwordResults = results.filter((result) =>
+    isExactHeadwordMatch(result, normalized, queryAsUly, queryAsUey),
+  );
+  const visibleResults = exactHeadwordResults.length
+    ? exactHeadwordResults
+    : results;
 
-  return results.slice(0, MAX_RESULTS);
+  return visibleResults.slice(0, MAX_RESULTS);
 }
 
 function rankEntry(
@@ -177,6 +187,23 @@ function matchesQuery(value: string, normalized: string, fallback: string) {
   return value === normalized || Boolean(fallback && value === fallback);
 }
 
+function isExactHeadwordMatch(
+  result: DictionarySearchResult,
+  normalized: string,
+  queryAsUly: string,
+  queryAsUey: string,
+) {
+  if (result.matchedOn === 'uly') {
+    return matchesQuery(normalizeQuery(result.entry.uly), normalized, queryAsUly);
+  }
+
+  if (result.matchedOn === 'uey') {
+    return matchesQuery(normalizeQuery(result.entry.uey), normalized, queryAsUey);
+  }
+
+  return false;
+}
+
 function startsWithQuery(value: string, normalized: string, fallback: string) {
   return (
     value.startsWith(normalized) ||
@@ -193,4 +220,8 @@ function includesQuery(value: string, normalized: string, fallback: string) {
 
 function normalizeQuery(value: string): string {
   return value.trim().toLocaleLowerCase().replace(/\s+/g, ' ');
+}
+
+function normalizeUlyQueryAlias(value: string): string {
+  return COMMON_ULY_QUERY_ALIASES[value] ?? value;
 }
