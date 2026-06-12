@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import {
   AlertTriangle,
   ArrowRight,
+  BookmarkPlus,
   Check,
   FileImage,
   GraduationCap,
@@ -10,12 +11,15 @@ import {
   Repeat2,
   Search,
   ScanText,
+  SlidersHorizontal,
   Sparkles,
   Upload,
   X,
 } from 'lucide-react';
 import {
+  getReaderOcrQuality,
   recognizeUeyImage,
+  type ReaderOcrPreprocessingMode,
   type ReaderOcrProgress,
 } from '../lib/reader/ocr';
 import type { ReaderTextAnalysis } from '../lib/reader';
@@ -23,6 +27,7 @@ import {
   useReaderAnalysis,
   type ReaderLookupMatch,
 } from '../hooks/useReaderAnalysis';
+import { getStudyWordProgressId } from '../lib/local-profile';
 
 export type ReaderInputMode = 'text' | 'image';
 
@@ -36,10 +41,20 @@ interface ReaderPanelProps {
   onOpenDictionary: (query: string) => void;
   onStudy: (uly: string) => void;
   onConvert: (uey: string) => void;
+  onSaveWord: (uly: string) => void;
+  savedStudyWordIds: readonly string[];
 }
 
 const TAB_CLASS =
   'inline-flex min-h-10 items-center justify-center gap-2 rounded-md px-3 py-2 text-sm font-semibold transition';
+const OCR_PREPROCESSING_OPTIONS: readonly {
+  value: ReaderOcrPreprocessingMode;
+  label: string;
+}[] = [
+  { value: 'original', label: 'Original' },
+  { value: 'balanced', label: 'Balanced' },
+  { value: 'highContrast', label: 'High contrast' },
+];
 
 export function ReaderPanel({
   value,
@@ -51,9 +66,13 @@ export function ReaderPanel({
   onOpenDictionary,
   onStudy,
   onConvert,
+  onSaveWord,
+  savedStudyWordIds,
 }: ReaderPanelProps) {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreviewUrl, setImagePreviewUrl] = useState('');
+  const [ocrPreprocessing, setOcrPreprocessing] =
+    useState<ReaderOcrPreprocessingMode>('balanced');
   const [ocrProgress, setOcrProgress] = useState<ReaderOcrProgress | null>(
     null,
   );
@@ -94,10 +113,14 @@ export function ReaderPanel({
     setOcrConfidence(null);
 
     try {
-      const result = await recognizeUeyImage(imageFile, (progress) => {
-        setOcrProgress(progress);
-        setOcrStatus(progress.status);
-      });
+      const result = await recognizeUeyImage(
+        imageFile,
+        (progress) => {
+          setOcrProgress(progress);
+          setOcrStatus(progress.status);
+        },
+        { preprocessing: ocrPreprocessing },
+      );
       if (result.text) {
         onChange(result.text);
         onModeChange('text');
@@ -176,8 +199,10 @@ export function ReaderPanel({
             ocrProgress={ocrProgress}
             ocrStatus={ocrStatus}
             ocrConfidence={ocrConfidence}
+            ocrPreprocessing={ocrPreprocessing}
             imageInputRef={imageInputRef}
             onChooseImage={chooseImage}
+            onPreprocessingChange={setOcrPreprocessing}
             onRunOcr={runOcr}
           />
         )}
@@ -200,6 +225,8 @@ export function ReaderPanel({
             onOpenDictionary={onOpenDictionary}
             onStudy={onStudy}
             onConvert={onConvert}
+            onSaveWord={onSaveWord}
+            savedStudyWordIds={savedStudyWordIds}
           />
         </>
       ) : (
@@ -278,8 +305,10 @@ function ReaderImageInput({
   ocrProgress,
   ocrStatus,
   ocrConfidence,
+  ocrPreprocessing,
   imageInputRef,
   onChooseImage,
+  onPreprocessingChange,
   onRunOcr,
 }: {
   imageFile: File | null;
@@ -288,11 +317,14 @@ function ReaderImageInput({
   ocrProgress: ReaderOcrProgress | null;
   ocrStatus: string;
   ocrConfidence: number | null;
+  ocrPreprocessing: ReaderOcrPreprocessingMode;
   imageInputRef: React.RefObject<HTMLInputElement>;
   onChooseImage: (file: File | undefined) => void;
+  onPreprocessingChange: (mode: ReaderOcrPreprocessingMode) => void;
   onRunOcr: () => void;
 }) {
   const progressPercent = Math.round((ocrProgress?.progress ?? 0) * 100);
+  const quality = getReaderOcrQuality(ocrConfidence);
 
   return (
     <div className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,1fr)_18rem]">
@@ -313,6 +345,30 @@ function ReaderImageInput({
           </span>
           <div className="text-sm font-semibold text-slate-700">
             {imageFile ? imageFile.name : 'Choose an image'}
+          </div>
+          <div className="mx-auto grid w-full max-w-md gap-2">
+            <div className="flex items-center justify-center gap-2 text-xs font-semibold text-slate-500">
+              <SlidersHorizontal className="h-3.5 w-3.5" aria-hidden="true" />
+              OCR preprocessing
+            </div>
+            <div className="grid grid-cols-3 rounded-lg border border-slate-200 bg-white p-1">
+              {OCR_PREPROCESSING_OPTIONS.map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() => onPreprocessingChange(option.value)}
+                  disabled={isRecognizing}
+                  className={`min-h-9 rounded-md px-2 py-1 text-xs font-semibold transition ${
+                    ocrPreprocessing === option.value
+                      ? 'bg-indigo-600 text-white shadow-xs'
+                      : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'
+                  } disabled:cursor-not-allowed disabled:opacity-60`}
+                  aria-pressed={ocrPreprocessing === option.value}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
           </div>
           <div className="flex flex-wrap justify-center gap-2">
             <button
@@ -338,9 +394,20 @@ function ReaderImageInput({
             </button>
           </div>
           {ocrStatus ? (
-            <div className="mx-auto max-w-md text-xs font-medium text-slate-500">
-              {ocrStatus}
-              {ocrConfidence !== null ? ` · ${ocrConfidence}% confidence` : ''}
+            <div className="mx-auto flex max-w-md flex-wrap justify-center gap-2 text-xs font-medium text-slate-500">
+              <span>{ocrStatus}</span>
+              {ocrConfidence !== null ? (
+                <>
+                  <span>{ocrConfidence}% confidence</span>
+                  <span
+                    className={`rounded-full px-2 py-0.5 font-semibold ${ocrQualityClass(
+                      quality,
+                    )}`}
+                  >
+                    {ocrQualityLabel(quality)}
+                  </span>
+                </>
+              ) : null}
             </div>
           ) : null}
           {isRecognizing ? (
@@ -494,6 +561,8 @@ function ReaderWordAnalysis({
   onOpenDictionary,
   onStudy,
   onConvert,
+  onSaveWord,
+  savedStudyWordIds,
 }: {
   analysis: ReaderTextAnalysis;
   matches: Record<string, ReaderLookupMatch>;
@@ -501,6 +570,8 @@ function ReaderWordAnalysis({
   onOpenDictionary: (query: string) => void;
   onStudy: (uly: string) => void;
   onConvert: (uey: string) => void;
+  onSaveWord: (uly: string) => void;
+  savedStudyWordIds: readonly string[];
 }) {
   if (!analysis.lookupCandidates.length) return null;
 
@@ -520,6 +591,10 @@ function ReaderWordAnalysis({
           const match = matches[candidate.key];
           const primary = match?.results[0];
           const dictionaryQuery = match?.query ?? candidate.queries[0];
+          const saveToken = primary?.entry.uly ?? candidate.uly;
+          const isSaved = savedStudyWordIds.includes(
+            getStudyWordProgressId(saveToken),
+          );
 
           return (
             <article
@@ -545,6 +620,28 @@ function ReaderWordAnalysis({
                   ) : null}
                 </div>
                 <div className="flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() => onSaveWord(saveToken)}
+                    disabled={isSaved}
+                    aria-label={
+                      isSaved
+                        ? `${saveToken} saved for review`
+                        : `Save ${saveToken} for review`
+                    }
+                    className={`inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-xs font-semibold transition ${
+                      isSaved
+                        ? 'cursor-default border-emerald-200 bg-emerald-50 text-emerald-700'
+                        : 'border-emerald-200 bg-white text-emerald-700 hover:bg-emerald-50'
+                    }`}
+                  >
+                    {isSaved ? (
+                      <Check className="h-3.5 w-3.5" aria-hidden="true" />
+                    ) : (
+                      <BookmarkPlus className="h-3.5 w-3.5" aria-hidden="true" />
+                    )}
+                    {isSaved ? 'Saved' : 'Save'}
+                  </button>
                   <button
                     type="button"
                     onClick={() => onOpenDictionary(dictionaryQuery)}
@@ -659,4 +756,18 @@ function scriptLabel(script: ReaderTextAnalysis['sourceScript']) {
   if (script === 'uly') return 'ULY';
   if (script === 'mixed') return 'Mixed';
   return 'Unknown';
+}
+
+function ocrQualityLabel(quality: ReturnType<typeof getReaderOcrQuality>) {
+  if (quality === 'high') return 'High quality';
+  if (quality === 'medium') return 'Medium quality';
+  if (quality === 'low') return 'Low quality';
+  return 'Unknown quality';
+}
+
+function ocrQualityClass(quality: ReturnType<typeof getReaderOcrQuality>) {
+  if (quality === 'high') return 'bg-emerald-50 text-emerald-700';
+  if (quality === 'medium') return 'bg-amber-50 text-amber-700';
+  if (quality === 'low') return 'bg-rose-50 text-rose-700';
+  return 'bg-slate-100 text-slate-500';
 }

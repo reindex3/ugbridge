@@ -73,11 +73,14 @@ import {
 } from './lib/custom-transliterations';
 import {
   exportLocalProfileData,
+  getStudyWordProgressId,
   getQuizAccuracy,
   importLocalProfileData,
   loadDictionaryLookups,
   loadQuizProgress,
   loadStudyProgress,
+  recordStudyWordProgress,
+  saveStudyProgress,
   type DictionaryLookupRecord,
   type QuizProgress,
   type StudyWordProgressRecord,
@@ -122,6 +125,8 @@ export default function App() {
   const [customEntries, setCustomEntries] = useState<
     CustomTransliterationEntry[]
   >(loadCustomTransliterations);
+  const [studyProgress, setStudyProgress] =
+    useState<StudyWordProgressRecord[]>(loadStudyProgress);
   const [customUey, setCustomUey] = useState('');
   const [customUly, setCustomUly] = useState('');
   const [notice, setNotice] = useState('');
@@ -188,6 +193,10 @@ export default function App() {
     detectedDirection.direction;
   const hasTextWorkspaceActions =
     activeView === 'convert' || activeView === 'reader' || activeView === 'learn';
+  const savedStudyWordIds = useMemo(
+    () => studyProgress.map((item) => item.id),
+    [studyProgress],
+  );
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -222,6 +231,12 @@ export default function App() {
 
     return () => window.clearTimeout(timer);
   }, [activeDirection, activeView, input, output]);
+
+  useEffect(() => {
+    if (activeView === 'reader') {
+      setStudyProgress(loadStudyProgress());
+    }
+  }, [activeView]);
 
   const swap = () => {
     setInput(output);
@@ -449,6 +464,28 @@ export default function App() {
     setInput(uly);
     setDirection('uly-to-uey');
     setActiveView('learn');
+  };
+
+  const saveReaderStudyWord = (uly: string) => {
+    const token = uly.trim();
+    if (!token) return;
+
+    const current = loadStudyProgress();
+    const id = getStudyWordProgressId(token);
+    if (current.some((item) => item.id === id)) {
+      setStudyProgress(current);
+      showNotice(`${token} already saved`);
+      return;
+    }
+
+    const next = saveStudyProgress(
+      recordStudyWordProgress(current, {
+        token,
+        mastered: false,
+      }),
+    );
+    setStudyProgress(next);
+    showNotice(`${token} saved for review`);
   };
 
   const convertDictionaryEntry = (uey: string) => {
@@ -830,6 +867,8 @@ export default function App() {
             onOpenDictionary={openDictionaryQuery}
             onStudy={studyDictionaryEntry}
             onConvert={convertDictionaryEntry}
+            onSaveWord={saveReaderStudyWord}
+            savedStudyWordIds={savedStudyWordIds}
           />
         ) : activeView === 'learn' ? (
           <LearnPanel trace={trace} value={input} onChange={setInput} />

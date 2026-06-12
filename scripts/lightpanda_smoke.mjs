@@ -45,7 +45,14 @@ const checks = [
     path: '/?view=reader',
     waitScript:
       "(() => { const body = document.body; if (!body) return false; const button = Array.from(document.querySelectorAll('button')).find((item) => item.textContent && item.textContent.includes('Image OCR')); if (button && !body.textContent.includes('Recognize UEY')) button.click(); return body.textContent.includes('Upload image') && body.textContent.includes('Recognize UEY'); })()",
-    expected: ['Image OCR', 'Upload image', 'Recognize UEY'],
+    expected: [
+      'Image OCR',
+      'Upload image',
+      'OCR preprocessing',
+      'Balanced',
+      'High contrast',
+      'Recognize UEY',
+    ],
   },
   {
     name: 'learn reference highlights categories',

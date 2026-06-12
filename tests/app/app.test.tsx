@@ -285,6 +285,42 @@ describe('App conversion workflow', () => {
     expect(
       screen.getByRole('button', { name: 'Recognize UEY' }),
     ).toBeInTheDocument();
+    expect(screen.getByText('OCR preprocessing')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Balanced' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
+  });
+
+  it('saves Reader words for local review', async () => {
+    window.history.pushState(
+      {},
+      '',
+      '/?view=reader&text=%D8%B3%D8%A7%D9%84%D8%A7%D9%85+%D9%83%D9%89%D8%AA%D8%A7%D8%A8',
+    );
+    render(<App />);
+
+    expect(await screen.findByText('hello')).toBeInTheDocument();
+
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Save salam for review' }),
+    );
+
+    expect(screen.getByText('salam saved for review')).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'salam saved for review' }),
+    ).toBeDisabled();
+    expect(
+      JSON.parse(
+        window.localStorage.getItem('ugbridge.study.progress.v1') ?? '[]',
+      ),
+    ).toMatchObject([
+      {
+        token: 'salam',
+        mastered: false,
+        reviewCount: 1,
+      },
+    ]);
   });
 
   it('cycles theme mode with a single slider control', () => {
