@@ -1,11 +1,29 @@
-import { act, fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import App from '../../src/App';
+
+const KOFI_WIDGET_SCRIPT_URL =
+  'https://storage.ko-fi.com/cdn/scripts/overlay-widget.js';
 
 describe('App conversion workflow', () => {
   beforeEach(() => {
     window.localStorage.clear();
     window.history.pushState({}, '', '/');
+    (
+      window as Window & {
+        __ugbridgeKoFiWidgetDrawn?: boolean;
+        kofiWidgetOverlay?: unknown;
+      }
+    ).__ugbridgeKoFiWidgetDrawn = false;
+    delete (
+      window as Window & {
+        __ugbridgeKoFiWidgetDrawn?: boolean;
+        kofiWidgetOverlay?: unknown;
+      }
+    ).kofiWidgetOverlay;
+    document
+      .querySelectorAll(`script[src="${KOFI_WIDGET_SCRIPT_URL}"]`)
+      .forEach((script) => script.remove());
     Object.defineProperty(navigator, 'clipboard', {
       configurable: true,
       value: {
@@ -339,16 +357,17 @@ describe('App conversion workflow', () => {
     expect(screen.getByLabelText('Dictionary search')).toBeInTheDocument();
   });
 
-  it('links to the project Ko-fi page for support', () => {
+  it('loads the Ko-fi widget with a footer support fallback', async () => {
     render(<App />);
 
-    expect(screen.getByRole('link', { name: 'Support' })).toHaveAttribute(
-      'href',
-      'https://ko-fi.com/reindex33',
-    );
     expect(
       screen.getByRole('link', { name: 'Support UG Bridge' }),
     ).toHaveAttribute('href', 'https://ko-fi.com/reindex33');
+    await waitFor(() => {
+      expect(
+        document.querySelector(`script[src="${KOFI_WIDGET_SCRIPT_URL}"]`),
+      ).toBeInTheDocument();
+    });
   });
 
   it('shows local study profile data on the home page', () => {

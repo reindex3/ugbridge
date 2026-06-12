@@ -332,10 +332,10 @@ Real access must be protected with Firebase Security Rules and Authentication.
 
 ## Support
 
-UG Bridge links to the project Ko-fi page at
-[`ko-fi.com/reindex33`](https://ko-fi.com/reindex33) from the header and
-footer. This is only an external support link; the app does not process
-payments or store payment details.
+UG Bridge uses Ko-fi's official floating support widget for the project page at
+[`ko-fi.com/reindex33`](https://ko-fi.com/reindex33). The footer keeps a plain
+Ko-fi link as a fallback. UG Bridge does not process payments or store payment
+details.
 
 ## Privacy and Data
 
@@ -348,7 +348,8 @@ of being restored into the UI.
 The app sends text to a network service only when a user configures or selects
 a TTS provider that requires an endpoint. Image OCR downloads Tesseract assets
 and Uyghur traineddata from public CDNs on demand, but image recognition itself
-runs in the browser.
+runs in the browser. The optional support widget loads Ko-fi assets from Ko-fi's
+CDN so supporters can open the Ko-fi panel from the site.
 
 ## Deployment
 

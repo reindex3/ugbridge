@@ -90,7 +90,25 @@ import { analyzeReaderText } from './lib/reader';
 
 type Direction = 'uey-to-uly' | 'uly-to-uey';
 
+const KOFI_PAGE_ID = 'reindex33';
 const SUPPORT_URL = 'https://ko-fi.com/reindex33';
+const KOFI_WIDGET_SCRIPT_URL =
+  'https://storage.ko-fi.com/cdn/scripts/overlay-widget.js';
+const KOFI_WIDGET_BUTTON_TEXT = 'Support me on Ko-fi';
+const KOFI_WIDGET_COLOR = '#72a4f2';
+
+declare global {
+  interface Window {
+    __ugbridgeKoFiWidgetDrawn?: boolean;
+    kofiWidgetOverlay?: {
+      draw: (
+        pageId: string,
+        config: Record<string, string>,
+        containerId?: string,
+      ) => void;
+    };
+  }
+}
 type View =
   | 'home'
   | 'convert'
@@ -502,6 +520,7 @@ export default function App() {
 
   return (
     <div className="min-h-full bg-slate-100">
+      <KoFiOverlayWidget />
       <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
         <header className="mb-6 flex flex-col gap-4 border-b border-slate-200 pb-5 md:flex-row md:items-start md:justify-between">
           <div>
@@ -532,7 +551,6 @@ export default function App() {
           <div className="flex flex-col gap-3 md:items-end">
             <div className="flex flex-wrap items-center gap-2 md:justify-end">
               <ThemeToggle mode={themeMode} onChange={setThemeMode} />
-              <SupportLink />
               <GitHubLink />
             </div>
             <AppTabs
@@ -1624,6 +1642,64 @@ function ThemeToggle({
   );
 }
 
+function KoFiOverlayWidget() {
+  useEffect(() => {
+    if (typeof document === 'undefined' || window.__ugbridgeKoFiWidgetDrawn) {
+      return;
+    }
+
+    let cancelled = false;
+
+    const drawWidget = () => {
+      if (
+        cancelled ||
+        window.__ugbridgeKoFiWidgetDrawn ||
+        !window.kofiWidgetOverlay
+      ) {
+        return;
+      }
+
+      window.kofiWidgetOverlay.draw(KOFI_PAGE_ID, {
+        type: 'floating-chat',
+        'floating-chat.donateButton.text': KOFI_WIDGET_BUTTON_TEXT,
+        'floating-chat.donateButton.background-color': KOFI_WIDGET_COLOR,
+        'floating-chat.donateButton.text-color': '#ffffff',
+      });
+      window.__ugbridgeKoFiWidgetDrawn = true;
+    };
+
+    if (window.kofiWidgetOverlay) {
+      drawWidget();
+      return;
+    }
+
+    const existingScript = document.querySelector<HTMLScriptElement>(
+      `script[src="${KOFI_WIDGET_SCRIPT_URL}"]`,
+    );
+
+    if (existingScript) {
+      existingScript.addEventListener('load', drawWidget, { once: true });
+      return () => {
+        cancelled = true;
+        existingScript.removeEventListener('load', drawWidget);
+      };
+    }
+
+    const script = document.createElement('script');
+    script.src = KOFI_WIDGET_SCRIPT_URL;
+    script.async = true;
+    script.onload = drawWidget;
+    document.body.appendChild(script);
+
+    return () => {
+      cancelled = true;
+      script.onload = null;
+    };
+  }, []);
+
+  return null;
+}
+
 function GitHubLink() {
   return (
     <a
@@ -1634,20 +1710,6 @@ function GitHubLink() {
     >
       <GitHubIcon className="h-4 w-4" />
       GitHub
-    </a>
-  );
-}
-
-function SupportLink() {
-  return (
-    <a
-      href={SUPPORT_URL}
-      target="_blank"
-      rel="noreferrer"
-      className="inline-flex items-center gap-2 self-start rounded-full border border-rose-200 bg-rose-50 px-3 py-2 text-sm font-semibold text-rose-700 shadow-xs transition hover:border-rose-300 hover:bg-rose-100 md:self-end"
-    >
-      <Heart className="h-4 w-4" aria-hidden="true" />
-      Support
     </a>
   );
 }
