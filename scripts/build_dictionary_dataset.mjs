@@ -173,14 +173,17 @@ async function ingestJsonl(path, definitionsByUey) {
       continue;
     }
 
-    const input = cleanText(row.input);
-    const output = cleanText(row.output);
+    const rawInput = row.input;
+    const rawOutput = row.output;
+    const input = cleanText(rawInput);
+    const output = cleanText(rawOutput);
 
     if (looksUyghurArabic(input) && looksEnglish(output)) {
-      addPair(definitionsByUey, input, output);
+      addPair(definitionsByUey, rawInput, rawOutput);
     } else if (looksEnglish(input) && looksUyghurArabic(output)) {
-      for (const ueyPart of splitTranslations(output).filter(looksUyghurArabic)) {
-        addPair(definitionsByUey, ueyPart, input);
+      const ueyParts = splitTranslations(rawOutput).filter(looksUyghurArabic);
+      for (const ueyPart of ueyParts) {
+        addPair(definitionsByUey, ueyPart, rawInput);
       }
     }
   }
@@ -252,10 +255,14 @@ function cleanText(value) {
     .trim();
 }
 
-function splitTranslations(value) {
-  return cleanText(value)
+export function splitTranslations(value) {
+  return String(value)
+    .replace(/\\\\n/g, '\n')
+    .replace(/\\n/g, '\n')
+    .replace(TAG_RE, '\n')
+    .replace(HTML_ENTITY_RE, ' ')
     .split(/\s*(?:;|؛|،|,|\n|\/)\s*/)
-    .map((part) => part.trim())
+    .map((part) => part.replace(/\s+/g, ' ').trim())
     .filter(Boolean)
     .filter((part) => part.length <= MAX_TEXT_LENGTH)
     .filter((part) => !CHINESE_RE.test(part));

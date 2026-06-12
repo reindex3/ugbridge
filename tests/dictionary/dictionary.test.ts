@@ -816,6 +816,24 @@ describe('build_dictionary_dataset', () => {
       'ئايلاندۇرۇپ ئورىماق ئۆتكەن زامان تارماق شەكلى',
     );
   });
+
+  it('keeps HTML and literal newline separators when splitting translations', async () => {
+    const { splitTranslations } = await importBuildDictionaryScript();
+
+    expect(splitTranslations('frequency variation<br>frequency conversion')).toEqual([
+      'frequency variation',
+      'frequency conversion',
+    ]);
+    expect(splitTranslations('lay out\\n invest; put out')).toEqual([
+      'lay out',
+      'invest',
+      'put out',
+    ]);
+    expect(splitTranslations('ئاياغنىڭ يۈزلۈكى<br>ئويدۇرماق')).toEqual([
+      'ئاياغنىڭ يۈزلۈكى',
+      'ئويدۇرماق',
+    ]);
+  });
 });
 
 async function importStaticDictionary() {
@@ -827,6 +845,7 @@ async function importBuildDictionaryScript() {
   // @ts-ignore The dataset builder is a plain ESM script, not TypeScript.
   return import('../../scripts/build_dictionary_dataset.mjs') as Promise<{
     cleanHeadword: (value: string) => string;
+    splitTranslations: (value: string) => string[];
   }>;
 }
 

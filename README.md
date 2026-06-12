@@ -219,8 +219,9 @@ The build script imports the English ⇄ Uyghur files:
 - `en-ug.jsonl`
 
 and generates cleaned static JSON shards under `public/dictionary/`. During
-generation, parenthetical Uyghur headword annotations are stripped so
-descriptive notes do not become searchable headwords.
+generation, HTML/newline translation separators are preserved before splitting,
+and parenthetical Uyghur headword annotations are stripped so descriptive notes
+do not become searchable headwords.
 
 ```bash
 npm run dictionary:build
@@ -235,8 +236,8 @@ temporary network error does not poison the session.
 
 Current generated size:
 
-- about 343k Uyghur headwords
-- about 721k English definitions
+- about 314k Uyghur headwords
+- about 725k English definitions
 
 ## Reader and OCR
 
