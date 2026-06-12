@@ -34,6 +34,20 @@ const checks = [
     expected: ['Dictionary search', 'ياخشى', 'yaxshi'],
   },
   {
+    name: 'reader restores shared text',
+    path: '/?view=reader&text=%D8%B3%D8%A7%D9%84%D8%A7%D9%85+%D9%83%D9%89%D8%AA%D8%A7%D8%A8',
+    waitScript:
+      "document.body && document.body.textContent.includes('Word analysis') && document.body.textContent.includes('salam kitab')",
+    expected: ['Reader text', 'UEY', 'ULY', 'Word analysis', 'salam', 'kitab'],
+  },
+  {
+    name: 'reader image OCR tab opens',
+    path: '/?view=reader',
+    waitScript:
+      "(() => { const body = document.body; if (!body) return false; const button = Array.from(document.querySelectorAll('button')).find((item) => item.textContent && item.textContent.includes('Image OCR')); if (button && !body.textContent.includes('Recognize UEY')) button.click(); return body.textContent.includes('Upload image') && body.textContent.includes('Recognize UEY'); })()",
+    expected: ['Image OCR', 'Upload image', 'Recognize UEY'],
+  },
+  {
     name: 'learn reference highlights categories',
     path: '/?view=learn',
     waitScript:

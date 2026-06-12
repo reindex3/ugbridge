@@ -8,6 +8,7 @@ import {
   Copy,
   Database,
   Download,
+  FileImage,
   Files,
   GraduationCap,
   History,
@@ -19,6 +20,7 @@ import {
   Moon,
   Plus,
   Search,
+  ScanText,
   Share2,
   ShieldCheck,
   Sparkles,
@@ -44,6 +46,10 @@ import { LearnPanel } from './components/LearnPanel';
 import { AlphabetPanel } from './components/AlphabetPanel';
 import { DictionaryPanel } from './components/DictionaryPanel';
 import { QuizPanel } from './components/QuizPanel';
+import {
+  ReaderPanel,
+  type ReaderInputMode,
+} from './components/ReaderPanel';
 import { useTtsStatus } from './hooks/useTtsStatus';
 import { useThemeMode } from './hooks/useThemeMode';
 import { createTtsProvider } from './lib/tts';
@@ -76,9 +82,17 @@ import {
   type QuizProgress,
   type StudyWordProgressRecord,
 } from './lib/local-profile';
+import { analyzeReaderText } from './lib/reader';
 
 type Direction = 'uey-to-uly' | 'uly-to-uey';
-type View = 'home' | 'convert' | 'learn' | 'quiz' | 'alphabet' | 'dictionary';
+type View =
+  | 'home'
+  | 'convert'
+  | 'reader'
+  | 'learn'
+  | 'quiz'
+  | 'alphabet'
+  | 'dictionary';
 
 interface InitialState {
   direction: Direction;
@@ -96,6 +110,7 @@ export default function App() {
   const initial = useMemo(readInitialState, []);
   const [themeMode, setThemeMode] = useThemeMode();
   const [activeView, setActiveView] = useState<View>(initial.view);
+  const [readerMode, setReaderMode] = useState<ReaderInputMode>('text');
   const [direction, setDirection] = useState<Direction>(initial.direction);
   const [input, setInput] = useState(initial.input);
   const [lookupQuery, setLookupQuery] = useState(initial.lookupQuery);
@@ -144,6 +159,13 @@ export default function App() {
     output,
   });
   const ulyText = activeDirection === 'uey-to-uly' ? output : input;
+  const readerToolbarAnalysis = useMemo(() => analyzeReaderText(input), [input]);
+  const toolbarUeyText =
+    activeView === 'reader' ? readerToolbarAnalysis.ueyText : ueyText;
+  const toolbarUlyText =
+    activeView === 'reader' ? readerToolbarAnalysis.ulyText : ulyText;
+  const downloadText =
+    activeView === 'reader' ? readerToolbarAnalysis.ueyText : output;
   const ipaText = useMemo(() => ulyToIpa(ulyText).trim(), [ulyText]);
   const inputMode = activeDirection === 'uey-to-uly' ? 'uey' : 'uly';
   const outputMode = activeDirection === 'uey-to-uly' ? 'uly' : 'uey';
@@ -165,7 +187,7 @@ export default function App() {
     detectedDirection.confidence === 'high' &&
     detectedDirection.direction;
   const hasTextWorkspaceActions =
-    activeView === 'convert' || activeView === 'learn';
+    activeView === 'convert' || activeView === 'reader' || activeView === 'learn';
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -344,13 +366,15 @@ export default function App() {
   };
 
   const downloadOutput = () => {
-    if (!output) return;
-    const blob = new Blob([output], { type: 'text/plain;charset=utf-8' });
+    if (!downloadText) return;
+    const blob = new Blob([downloadText], { type: 'text/plain;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
     link.download =
-      activeDirection === 'uey-to-uly'
+      activeView === 'reader'
+        ? 'ugbridge-reader-uey.txt'
+        : activeDirection === 'uey-to-uly'
         ? 'uybridge-output-uly.txt'
         : 'uybridge-output-uey.txt';
     link.click();
@@ -402,6 +426,23 @@ export default function App() {
       setDirection('uly-to-uey');
     }
     setActiveView('learn');
+  };
+
+  const openReaderView = () => {
+    setReaderMode('text');
+    setActiveView('reader');
+  };
+
+  const openReaderOcrView = () => {
+    setReaderMode('image');
+    setActiveView('reader');
+    showNotice('Image OCR ready');
+  };
+
+  const openDictionaryQuery = (query: string) => {
+    setInput(query);
+    setActiveView('dictionary');
+    showNotice(`Looking up ${query}`);
   };
 
   const studyDictionaryEntry = (uly: string) => {
@@ -456,6 +497,7 @@ export default function App() {
             <AppTabs
               activeView={activeView}
               onConvert={() => setActiveView('convert')}
+              onReader={openReaderView}
               onLearn={openLearnView}
               onQuiz={() => setActiveView('quiz')}
               onAlphabet={() => setActiveView('alphabet')}
@@ -472,6 +514,11 @@ export default function App() {
             </div>
           ) : activeView === 'convert' ? (
             <DirectionControl direction={direction} onSwap={swap} />
+          ) : activeView === 'reader' ? (
+            <div className="inline-flex items-center gap-2 rounded-full bg-indigo-50 px-4 py-2 text-sm font-semibold text-indigo-700">
+              <ScanText className="h-4 w-4" aria-hidden="true" />
+              Reader
+            </div>
           ) : activeView === 'learn' ? (
             <div className="inline-flex items-center gap-2 rounded-full bg-indigo-50 px-4 py-2 text-sm font-semibold text-indigo-700">
               <GraduationCap className="h-4 w-4" aria-hidden="true" />
@@ -497,7 +544,7 @@ export default function App() {
           <div className="flex flex-wrap items-center gap-2">
             {hasTextWorkspaceActions && (
               <SpeakButton
-                text={ueyText}
+                text={toolbarUeyText}
                 isAvailable={isAvailable}
                 tts={tts}
               />
@@ -517,8 +564,8 @@ export default function App() {
               <>
                 <button
                   type="button"
-                  onClick={() => copyText(ueyText, 'UEY')}
-                  disabled={!ueyText}
+                  onClick={() => copyText(toolbarUeyText, 'UEY')}
+                  disabled={!toolbarUeyText}
                   className={getToolbarButtonClass(completedAction === 'UEY')}
                 >
                   {completedAction === 'UEY' ? (
@@ -530,8 +577,8 @@ export default function App() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => copyText(ulyText, 'ULY')}
-                  disabled={!ulyText}
+                  onClick={() => copyText(toolbarUlyText, 'ULY')}
+                  disabled={!toolbarUlyText}
                   className={getToolbarButtonClass(completedAction === 'ULY')}
                 >
                   {completedAction === 'ULY' ? (
@@ -544,9 +591,12 @@ export default function App() {
                 <button
                   type="button"
                   onClick={() =>
-                    copyText(`UEY:\n${ueyText}\n\nULY:\n${ulyText}`, 'Both')
+                    copyText(
+                      `UEY:\n${toolbarUeyText}\n\nULY:\n${toolbarUlyText}`,
+                      'Both',
+                    )
                   }
-                  disabled={!ueyText && !ulyText}
+                  disabled={!toolbarUeyText && !toolbarUlyText}
                   className={getToolbarButtonClass(completedAction === 'Both')}
                 >
                   {completedAction === 'Both' ? (
@@ -582,8 +632,16 @@ export default function App() {
                 </button>
                 <button
                   type="button"
+                  onClick={openReaderOcrView}
+                  className={BUTTON_CLASS}
+                >
+                  <FileImage className="h-4 w-4" aria-hidden="true" />
+                  Image OCR
+                </button>
+                <button
+                  type="button"
                   onClick={downloadOutput}
-                  disabled={!output}
+                  disabled={!downloadText}
                   className={BUTTON_CLASS}
                 >
                   <Download className="h-4 w-4" aria-hidden="true" />
@@ -681,6 +739,7 @@ export default function App() {
         {activeView === 'home' ? (
           <HomePanel
             onConvert={() => setActiveView('convert')}
+            onReader={openReaderView}
             onDictionary={() => setActiveView('dictionary')}
             onLearn={openLearnView}
             onQuiz={() => setActiveView('quiz')}
@@ -760,6 +819,18 @@ export default function App() {
               onClear={clearHistory}
             />
           </>
+        ) : activeView === 'reader' ? (
+          <ReaderPanel
+            value={input}
+            mode={readerMode}
+            onModeChange={setReaderMode}
+            onChange={handleInputChange}
+            onPasteClipboard={pasteClipboardText}
+            onClear={clearInput}
+            onOpenDictionary={openDictionaryQuery}
+            onStudy={studyDictionaryEntry}
+            onConvert={convertDictionaryEntry}
+          />
         ) : activeView === 'learn' ? (
           <LearnPanel trace={trace} value={input} onChange={setInput} />
         ) : activeView === 'quiz' ? (
@@ -782,6 +853,7 @@ export default function App() {
 function AppTabs({
   activeView,
   onConvert,
+  onReader,
   onLearn,
   onQuiz,
   onAlphabet,
@@ -789,6 +861,7 @@ function AppTabs({
 }: {
   activeView: View;
   onConvert: () => void;
+  onReader: () => void;
   onLearn: () => void;
   onQuiz: () => void;
   onAlphabet: () => void;
@@ -796,14 +869,15 @@ function AppTabs({
 }) {
   const tabIndexByView: Partial<Record<View, number>> = {
     convert: 0,
-    learn: 1,
-    quiz: 2,
-    alphabet: 3,
-    dictionary: 4,
+    reader: 1,
+    dictionary: 2,
+    learn: 3,
+    quiz: 4,
+    alphabet: 5,
   };
   const activeIndex = tabIndexByView[activeView];
   const tabClass = (view: View) =>
-    `relative z-10 inline-flex items-center justify-center gap-0.5 rounded-full px-0.5 py-2 text-[0.6rem] font-semibold transition-colors duration-200 sm:gap-1.5 sm:px-3 sm:text-sm ${
+    `relative z-10 inline-flex items-center justify-center gap-0.5 rounded-full px-0.5 py-2 text-[0.55rem] font-semibold transition-colors duration-200 sm:gap-1 sm:px-2 sm:text-xs lg:gap-1.5 lg:px-3 lg:text-sm ${
       activeView === view
         ? 'text-white'
         : 'text-slate-600 hover:bg-slate-50'
@@ -812,13 +886,13 @@ function AppTabs({
   return (
     <nav
       aria-label="Workspace"
-      className="relative grid w-full grid-cols-5 overflow-hidden rounded-full border border-slate-200 bg-white p-1 shadow-xs md:w-176"
+      className="relative grid w-full grid-cols-6 overflow-hidden rounded-full border border-slate-200 bg-white p-1 shadow-xs md:w-[52rem]"
     >
       {activeIndex !== undefined && (
         <span
           className="pointer-events-none absolute inset-y-1 left-1 rounded-full bg-indigo-600 shadow-xs transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none"
           style={{
-            width: 'calc((100% - 0.5rem) / 5)',
+            width: 'calc((100% - 0.5rem) / 6)',
             transform: `translateX(${activeIndex * 100}%)`,
           }}
           aria-hidden="true"
@@ -832,6 +906,24 @@ function AppTabs({
       >
         <Languages className="h-4 w-4 shrink-0" aria-hidden="true" />
         Convert
+      </button>
+      <button
+        type="button"
+        onClick={onReader}
+        aria-current={activeView === 'reader' ? 'page' : undefined}
+        className={tabClass('reader')}
+      >
+        <ScanText className="h-4 w-4 shrink-0" aria-hidden="true" />
+        Reader
+      </button>
+      <button
+        type="button"
+        onClick={onDictionary}
+        aria-current={activeView === 'dictionary' ? 'page' : undefined}
+        className={tabClass('dictionary')}
+      >
+        <Search className="h-4 w-4 shrink-0" aria-hidden="true" />
+        Dictionary
       </button>
       <button
         type="button"
@@ -860,21 +952,13 @@ function AppTabs({
         <BookOpenText className="h-4 w-4 shrink-0" aria-hidden="true" />
         Alphabet
       </button>
-      <button
-        type="button"
-        onClick={onDictionary}
-        aria-current={activeView === 'dictionary' ? 'page' : undefined}
-        className={tabClass('dictionary')}
-      >
-        <Search className="h-4 w-4 shrink-0" aria-hidden="true" />
-        Dictionary
-      </button>
     </nav>
   );
 }
 
 function HomePanel({
   onConvert,
+  onReader,
   onDictionary,
   onLearn,
   onQuiz,
@@ -885,6 +969,7 @@ function HomePanel({
   onConvertDictionaryEntry,
 }: {
   onConvert: () => void;
+  onReader: () => void;
   onDictionary: () => void;
   onLearn: () => void;
   onQuiz: () => void;
@@ -929,6 +1014,14 @@ function HomePanel({
               <Search className="h-4 w-4" aria-hidden="true" />
               Search dictionary
             </button>
+            <button
+              type="button"
+              onClick={onReader}
+              className={BUTTON_CLASS}
+            >
+              <ScanText className="h-4 w-4" aria-hidden="true" />
+              Open Reader
+            </button>
           </div>
         </div>
 
@@ -969,12 +1062,18 @@ function HomePanel({
         />
       </section>
 
-      <section className="grid gap-3 md:grid-cols-2 lg:grid-cols-5">
+      <section className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
         <HomeFeature
           icon={<Languages className="h-5 w-5" aria-hidden="true" />}
           title="Convert"
           description="Switch UEY and ULY text with visible letter-by-letter mapping."
           onClick={onConvert}
+        />
+        <HomeFeature
+          icon={<ScanText className="h-5 w-5" aria-hidden="true" />}
+          title="Reader"
+          description="Analyze pasted text or OCR an image into editable UEY."
+          onClick={onReader}
         />
         <HomeFeature
           icon={<Search className="h-5 w-5" aria-hidden="true" />}
@@ -1715,6 +1814,7 @@ function readInitialState(): InitialState {
   const dictionaryQuery = params.get('dict') ?? '';
   const view: View =
     viewParam === 'convert' ||
+    viewParam === 'reader' ||
     viewParam === 'learn' ||
     viewParam === 'home' ||
     viewParam === 'quiz' ||
@@ -1759,6 +1859,8 @@ function buildAppStateUrl(url: URL, state: AppUrlState) {
     url.searchParams.set('d', state.direction);
     if (state.input) url.searchParams.set('text', state.input);
     if (state.lookupQuery) url.searchParams.set('lookup', state.lookupQuery);
+  } else if (state.view === 'reader') {
+    if (state.input) url.searchParams.set('text', state.input);
   } else if (state.view === 'home') {
     if (state.input) url.searchParams.set('q', state.input);
   }

@@ -59,6 +59,20 @@ describe('App conversion workflow', () => {
     );
   });
 
+  it('opens a shared reader URL with its text restored', () => {
+    window.history.pushState(
+      {},
+      '',
+      '/?view=reader&text=%D8%B3%D8%A7%D9%84%D8%A7%D9%85+%D9%83%D9%89%D8%AA%D8%A7%D8%A8',
+    );
+
+    render(<App />);
+
+    expect(screen.getAllByText('Reader').length).toBeGreaterThan(0);
+    expect(screen.getByLabelText('Reader text')).toHaveValue('سالام كىتاب');
+    expect(screen.getAllByText('salam kitab').length).toBeGreaterThan(0);
+  });
+
   it('detects strong ULY input and converts it to UEY', () => {
     window.history.pushState({}, '', '/?view=convert');
     render(<App />);
@@ -139,6 +153,21 @@ describe('App conversion workflow', () => {
       expect.stringContaining('/?dict=yaxshi'),
     );
     expect(screen.getByText('Share link copied')).toBeInTheDocument();
+  });
+
+  it('copies a share link with reader text', async () => {
+    window.history.pushState({}, '', '/?view=reader&text=سالام');
+    render(<App />);
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Share' }));
+    });
+
+    expect(navigator.clipboard.writeText).toHaveBeenCalledWith(
+      expect.stringContaining(
+        '?view=reader&text=%D8%B3%D8%A7%D9%84%D8%A7%D9%85',
+      ),
+    );
   });
 
   it('keeps the current convert state in the URL', () => {
@@ -242,6 +271,18 @@ describe('App conversion workflow', () => {
       }),
     ).toBeInTheDocument();
     expect(screen.getByText('Direction swapped')).toBeInTheDocument();
+  });
+
+  it('opens image OCR from the converter toolbar', () => {
+    window.history.pushState({}, '', '/?view=convert');
+    render(<App />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Image OCR' }));
+
+    expect(screen.getByText('Image OCR ready')).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Recognize UEY' }),
+    ).toBeInTheDocument();
   });
 
   it('cycles theme mode with a single slider control', () => {

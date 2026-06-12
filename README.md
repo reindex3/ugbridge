@@ -48,6 +48,12 @@
   upload/download.
 - **Look up converted words inline** by tapping output word chips that open
   dictionary results without leaving the conversion workspace.
+- **Analyze full text in Reader** with side-by-side UEY/ULY views, script
+  detection, word grouping, dictionary matches, simple Uyghur suffix-root
+  fallback, `?view=reader&text=` share links, and direct study/convert actions.
+- **Recognize UEY from images** through an experimental Image OCR input powered
+  by Tesseract.js and the `uig` traineddata model. OCR runs in the browser,
+  lazy-loads only when requested, and returns editable text before analysis.
 - **Inspect the letter bridge** from ULY to UEY, including per-segment mapping,
   word-initial hamza behavior, and Uyghur letter forms.
 - **Search offline dictionary data** from the home page or dictionary view by
@@ -105,6 +111,7 @@ npm run dictionary:build # rebuild generated dictionary shards
 - Vite + React 18 + TypeScript
 - Tailwind CSS v4 with the `@tailwindcss/vite` plugin
 - Lucide React icons
+- Tesseract.js for optional browser-side Uyghur OCR
 - Vitest + Testing Library
 - Firebase Hosting
 - Firebase Web SDK initialized for future Auth / Firestore use
@@ -122,6 +129,7 @@ src/
 ├── lib/
 │   ├── converter/           # pure UEY/ULY conversion logic
 │   ├── dictionary/          # pure dictionary search helpers
+│   ├── reader/              # pure reader analysis and OCR adapter
 │   ├── tts/                 # TTS provider interface and implementations
 │   ├── conversion-history.ts
 │   ├── custom-transliterations.ts
@@ -211,6 +219,24 @@ Current generated size:
 - about 350k Uyghur headwords
 - about 725k English definitions
 
+## Reader and OCR
+
+Reader is the sentence and paragraph workspace. It accepts pasted text or a
+shared URL such as `?view=reader&text=سالام`, detects whether the source is UEY,
+ULY, mixed, or unknown, and keeps UEY and ULY renderings visible together.
+Word analysis deduplicates repeated tokens and searches the local dictionary by
+ULY form. If an exact token misses, Reader tries a short list of simple suffix
+roots such as `sizni` → `siz` and `kitablar` → `kitab`.
+
+Image OCR is a Reader input mode, not a separate top-level product surface. It
+uses `tesseract.js` with language code `uig`. The worker, WASM core, and
+`uig.traineddata.gz` are loaded lazily from public CDNs when a user runs OCR,
+then cached by the browser/Tesseract.js where supported. Firebase Hosting does
+not serve the OCR model file.
+
+OCR output is treated as a draft: the recognized UEY text lands in the editable
+Reader text area before conversion, dictionary matching, study, or speech.
+
 ## Fonts
 
 UEY text uses a bundled `UKIJ Ekran` webfont subset from the
@@ -278,14 +304,16 @@ Real access must be protected with Firebase Security Rules and Authentication.
 
 ## Privacy and Data
 
-Core conversion, dictionary lookup, study tools, custom words, and recent
-history run in the browser. Custom words, history, study progress, theme mode,
-and TTS settings are stored locally in the user's browser storage. Stored
-values are normalized on load, and invalid entries are ignored instead of being
-restored into the UI.
+Core conversion, Reader analysis, dictionary lookup, study tools, custom words,
+and recent history run in the browser. Custom words, history, study progress,
+theme mode, and TTS settings are stored locally in the user's browser storage.
+Stored values are normalized on load, and invalid entries are ignored instead
+of being restored into the UI.
 
 The app sends text to a network service only when a user configures or selects
-a TTS provider that requires an endpoint.
+a TTS provider that requires an endpoint. Image OCR downloads Tesseract assets
+and Uyghur traineddata from public CDNs on demand, but image recognition itself
+runs in the browser.
 
 ## Deployment
 
@@ -311,14 +339,14 @@ configured in [.firebaserc](.firebaserc).
 The test suite covers converter behavior, round-trip expectations, IPA hints,
 alphabet data and connected form samples, dictionary search, cross-script
 fallbacks, typo suggestions, retryable shard loading, dictionary panel
-interactions, app conversion workflows, shareable URL state, keyboard
-shortcuts, text input/output controls, custom transliterations, history,
-learning progress, speech controls, and TTS settings.
-Lightpanda smoke checks cover the homepage, shared conversion URLs, and
-dictionary `?dict=` result rendering in a lightweight browser runtime. Real-browser
-smoke checks are still useful for responsive navigation, especially clipboard,
-dictionary shard fetches, recent/favorite dictionary controls, quiz interactions,
-and mobile tab fit.
+interactions, Reader text analysis, app conversion workflows, shareable URL
+state, keyboard shortcuts, text input/output controls, custom transliterations,
+history, learning progress, speech controls, and TTS settings.
+Lightpanda smoke checks cover the homepage, shared conversion URLs, Reader
+shared text and Image OCR entry, and dictionary `?dict=` result rendering in a
+lightweight browser runtime. Real-browser smoke checks are still useful for
+responsive navigation, especially clipboard, dictionary shard fetches,
+recent/favorite dictionary controls, quiz interactions, and mobile tab fit.
 
 ```bash
 npm test
