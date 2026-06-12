@@ -97,6 +97,35 @@ const KOFI_WIDGET_SCRIPT_URL =
 const KOFI_WIDGET_CSS_ID = 'ugbridge-kofi';
 const KOFI_WIDGET_BUTTON_TEXT = 'Support';
 const KOFI_WIDGET_COLOR = '#72a4f2';
+const KOFI_WIDGET_IFRAME_STYLE_ID = 'ugbridge-kofi-image-style';
+const KOFI_WIDGET_IFRAME_IDS = [
+  `kofi-wo-container${KOFI_WIDGET_CSS_ID}`,
+  `kofi-wo-container-mobi${KOFI_WIDGET_CSS_ID}`,
+];
+const KOFI_WIDGET_IFRAME_CSS = `
+  html,
+  body {
+    overflow: hidden !important;
+  }
+
+  .floatingchat-donate-button {
+    min-width: 0 !important;
+    overflow: hidden !important;
+    padding: 0 16px !important;
+  }
+
+  .floatingchat-donate-button span {
+    margin-left: 6px !important;
+    white-space: nowrap !important;
+  }
+
+  .kofiimg {
+    height: auto !important;
+    max-width: 26px !important;
+    min-width: 26px !important;
+    width: 26px !important;
+  }
+`;
 
 declare global {
   interface Window {
@@ -1650,6 +1679,45 @@ function KoFiOverlayWidget() {
     }
 
     let cancelled = false;
+    let styleTimeouts: number[] = [];
+
+    const clearStyleTimeouts = () => {
+      styleTimeouts.forEach((timeoutId) => window.clearTimeout(timeoutId));
+      styleTimeouts = [];
+    };
+
+    const styleWidgetImages = () => {
+      KOFI_WIDGET_IFRAME_IDS.forEach((iframeId) => {
+        const iframe = document.getElementById(
+          iframeId,
+        ) as HTMLIFrameElement | null;
+        const iframeDocument = iframe?.contentDocument;
+        const iframeHead = iframeDocument?.head;
+
+        if (!iframe || !iframeDocument || !iframeHead) {
+          return;
+        }
+
+        iframe.setAttribute('scrolling', 'no');
+        iframe.style.overflow = 'hidden';
+
+        if (iframeDocument.getElementById(KOFI_WIDGET_IFRAME_STYLE_ID)) {
+          return;
+        }
+
+        const style = iframeDocument.createElement('style');
+        style.id = KOFI_WIDGET_IFRAME_STYLE_ID;
+        style.textContent = KOFI_WIDGET_IFRAME_CSS;
+        iframeHead.append(style);
+      });
+    };
+
+    const scheduleWidgetImageStyle = () => {
+      clearStyleTimeouts();
+      styleTimeouts = [0, 300, 900, 1800].map((delay) =>
+        window.setTimeout(styleWidgetImages, delay),
+      );
+    };
 
     const drawWidget = () => {
       if (
@@ -1667,6 +1735,7 @@ function KoFiOverlayWidget() {
         'floating-chat.donateButton.background-color': KOFI_WIDGET_COLOR,
         'floating-chat.donateButton.text-color': '#ffffff',
       });
+      scheduleWidgetImageStyle();
       window.__ugbridgeKoFiWidgetDrawn = true;
     };
 
@@ -1683,6 +1752,7 @@ function KoFiOverlayWidget() {
       existingScript.addEventListener('load', drawWidget, { once: true });
       return () => {
         cancelled = true;
+        clearStyleTimeouts();
         existingScript.removeEventListener('load', drawWidget);
       };
     }
@@ -1695,6 +1765,7 @@ function KoFiOverlayWidget() {
 
     return () => {
       cancelled = true;
+      clearStyleTimeouts();
       script.onload = null;
     };
   }, []);

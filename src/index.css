@@ -58,13 +58,14 @@ body .floatingchat-container-wrap-mobi {
   left: auto !important;
   max-width: calc(100vw - 32px) !important;
   right: max(16px, env(safe-area-inset-right)) !important;
-  width: 148px !important;
+  width: 180px !important;
 }
 
 body .floatingchat-container,
 body .floatingchat-container-mobi {
   height: 50px !important;
-  width: 148px !important;
+  overflow: hidden !important;
+  width: 180px !important;
 }
 
 body .floating-chat-kofi-popup-iframe,

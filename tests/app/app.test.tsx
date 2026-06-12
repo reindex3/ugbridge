@@ -371,7 +371,16 @@ describe('App conversion workflow', () => {
   });
 
   it('draws a compact Ko-fi floating widget when the overlay is ready', async () => {
-    const draw = vi.fn();
+    const draw = vi.fn(() => {
+      [
+        'kofi-wo-containerugbridge-kofi',
+        'kofi-wo-container-mobiugbridge-kofi',
+      ].forEach((id) => {
+        const iframe = document.createElement('iframe');
+        iframe.id = id;
+        document.body.append(iframe);
+      });
+    });
     (
       window as Window & {
         kofiWidgetOverlay?: {
@@ -393,6 +402,18 @@ describe('App conversion workflow', () => {
           'floating-chat.donateButton.text-color': '#ffffff',
         }),
       );
+    });
+
+    await waitFor(() => {
+      const iframe = document.getElementById(
+        'kofi-wo-containerugbridge-kofi',
+      ) as HTMLIFrameElement | null;
+
+      expect(iframe?.getAttribute('scrolling')).toBe('no');
+      expect(
+        iframe?.contentDocument?.getElementById('ugbridge-kofi-image-style')
+          ?.textContent,
+      ).toContain('width: 26px');
     });
   });
 
