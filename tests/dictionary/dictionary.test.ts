@@ -30,6 +30,13 @@ describe('searchDictionary', () => {
     expect(result.matchedText).toBe('book');
   });
 
+  it('finds seeded common words by English definition', () => {
+    const [result] = searchDictionary('water');
+    expect(result.entry.uly).toBe('su');
+    expect(result.entry.uey).toBe('سۇ');
+    expect(result.matchedText).toBe('water');
+  });
+
   it('finds entries by example text', () => {
     const [result] = searchDictionary('love');
     expect(result.entry.uly).toBe('körimen');
@@ -89,6 +96,105 @@ describe('searchDictionary', () => {
 
     expect(results[0].entry.id).toBe('exact');
     expect(results[0].matchedText).toBe('book');
+  });
+
+  it('ranks curated exact English matches before noisy static matches', () => {
+    const results = searchDictionary('thanks', [
+      {
+        id: 'static-noisy',
+        uey: 'ھەشقاللا، رەھمەت، تەشەككۈر',
+        uly: 'heshqalla, rehmet, teshekkür',
+        ipa: '',
+        partOfSpeech: 'translation',
+        definitions: ['thanks'],
+      },
+      {
+        id: 'rahmet',
+        uey: 'رەھمەت',
+        uly: 'rehmet',
+        ipa: 'ræhmæt',
+        partOfSpeech: 'interjection',
+        definitions: ['thank you', 'thanks'],
+      },
+    ]);
+
+    expect(results[0].entry.id).toBe('rahmet');
+    expect(results[0].matchedText).toBe('thanks');
+  });
+
+  it('ranks compact English matches before long phrase headwords', () => {
+    const results = searchDictionary('book', [
+      {
+        id: 'static-phrase',
+        uey: 'ئەرز قىلىش كىتاب كىتابلار',
+        uly: 'erz qilish kitab kitablar',
+        ipa: '',
+        partOfSpeech: 'translation',
+        definitions: ['book'],
+      },
+      {
+        id: 'static-compact',
+        uey: 'كىتاب',
+        uly: 'kitab',
+        ipa: '',
+        partOfSpeech: 'translation',
+        definitions: ['book'],
+      },
+    ]);
+
+    expect(results[0].entry.id).toBe('static-compact');
+  });
+
+  it('prefers curated English matches over ambiguous ULY headwords in auto mode', () => {
+    const results = searchDictionary('pen', [
+      {
+        id: 'static-uly-pen',
+        uey: 'پەن',
+        uly: 'pen',
+        ipa: '',
+        partOfSpeech: 'translation',
+        definitions: ['science'],
+      },
+      {
+        id: 'qelem',
+        uey: 'قەلەم',
+        uly: 'qelem',
+        ipa: 'qælæm',
+        partOfSpeech: 'noun',
+        definitions: ['pen'],
+      },
+    ]);
+
+    expect(results[0].entry.id).toBe('qelem');
+    expect(results[0].matchedOn).toBe('definition');
+  });
+
+  it('keeps ambiguous Latin input as a ULY headword in ULY mode', () => {
+    const [result] = searchDictionary(
+      'pen',
+      [
+        {
+          id: 'static-uly-pen',
+          uey: 'پەن',
+          uly: 'pen',
+          ipa: '',
+          partOfSpeech: 'translation',
+          definitions: ['science'],
+        },
+        {
+          id: 'qelem',
+          uey: 'قەلەم',
+          uly: 'qelem',
+          ipa: 'qælæm',
+          partOfSpeech: 'noun',
+          definitions: ['pen'],
+        },
+      ],
+      'uly',
+    );
+
+    expect(result.entry.id).toBe('static-uly-pen');
+    expect(result.matchedOn).toBe('uly');
   });
 
   it('shows only exact headwords when long phrase matches share the same prefix', () => {

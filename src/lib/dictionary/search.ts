@@ -39,10 +39,19 @@ export function searchDictionary(
     )
     .filter((result): result is DictionarySearchResult => result !== null)
     .sort((a, b) => a.score - b.score || a.entry.uly.localeCompare(b.entry.uly));
+  const curatedExactDefinitionResults = results.filter((result) =>
+    isCuratedExactDefinitionMatch(result, normalized),
+  );
   const exactHeadwordResults = results.filter((result) =>
     isExactHeadwordMatch(result, normalized, queryAsUly, queryAsUey),
   );
-  const visibleResults = exactHeadwordResults.length
+  const visibleResults = shouldPreferCuratedEnglishResults(
+    searchMode,
+    query,
+    curatedExactDefinitionResults,
+  )
+    ? curatedExactDefinitionResults
+    : exactHeadwordResults.length
     ? exactHeadwordResults
     : results;
 
@@ -73,7 +82,9 @@ function rankEntry(
       : [example.uey, example.uly, example.english]
     ).some((value) => normalizeQuery(value).includes(normalized)),
   );
-  const definitionPenalty = Math.min(entry.definitions.length, 12) / 100;
+  const entryPenalty = getEntryRankPenalty(entry);
+  const definitionPenalty =
+    Math.min(entry.definitions.length, 12) / 100 + entryPenalty;
 
   if (
     mode !== 'english' &&
@@ -204,6 +215,25 @@ function isExactHeadwordMatch(
   return false;
 }
 
+function isCuratedExactDefinitionMatch(
+  result: DictionarySearchResult,
+  normalized: string,
+) {
+  return (
+    result.matchedOn === 'definition' &&
+    !result.entry.id.startsWith('static-') &&
+    normalizeQuery(result.matchedText) === normalized
+  );
+}
+
+function shouldPreferCuratedEnglishResults(
+  mode: DictionarySearchMode,
+  query: string,
+  results: readonly DictionarySearchResult[],
+) {
+  return mode === 'auto' && results.length > 0 && isPlainLatinQuery(query);
+}
+
 function startsWithQuery(value: string, normalized: string, fallback: string) {
   return (
     value.startsWith(normalized) ||
@@ -224,4 +254,22 @@ function normalizeQuery(value: string): string {
 
 function normalizeUlyQueryAlias(value: string): string {
   return COMMON_ULY_QUERY_ALIASES[value] ?? value;
+}
+
+function isPlainLatinQuery(value: string) {
+  return (
+    /[a-z]/i.test(value) &&
+    !ULY_HINT_RE.test(value) &&
+    !/[\u0600-\u06ff]/u.test(value)
+  );
+}
+
+function getEntryRankPenalty(entry: DictionaryEntry) {
+  const sourcePenalty = entry.id.startsWith('static-') ? 0.1 : 0;
+  const headwordWords = normalizeQuery(entry.uly).split(/\s+/).filter(Boolean);
+  const lengthPenalty =
+    Math.min(Math.max(headwordWords.length - 1, 0), 8) / 100;
+  const punctuationPenalty = /[(),;:،؛]/u.test(entry.uly) ? 0.05 : 0;
+
+  return sourcePenalty + lengthPenalty + punctuationPenalty;
 }
