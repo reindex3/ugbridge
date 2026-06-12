@@ -254,6 +254,45 @@ describe('DictionaryPanel', () => {
     expect(onQueryChange).toHaveBeenCalledWith('yaxshi');
   });
 
+  it('shows dictionary loading state for active queries', () => {
+    setLookupState({ isLoading: true });
+
+    renderPanel({ query: 'kitab' });
+
+    expect(screen.getByText('Searching dictionary...')).toBeInTheDocument();
+    expect(screen.queryByText(/No local dictionary match/)).not.toBeInTheDocument();
+  });
+
+  it('shows dictionary load errors without hiding the search controls', () => {
+    setLookupState({ error: 'Dictionary shard 503' });
+
+    renderPanel({ query: 'kitab' });
+
+    expect(
+      screen.getByText('Large dictionary unavailable; showing seed results only.'),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('combobox', { name: 'Dictionary search' }),
+    ).toBeInTheDocument();
+  });
+
+  it('shows loaded shard count after a completed static lookup', () => {
+    setLookupState({ loadedShardCount: 2 });
+
+    renderPanel({ query: 'kitab' });
+
+    expect(screen.getByText('Searched 2 dictionary shards.')).toBeInTheDocument();
+  });
+
+  it('offers shortened fallback queries for no-result punctuation and phrases', () => {
+    const { onQueryChange } = renderPanel({ query: 'rehmet éytip!' });
+
+    expect(screen.getByText('Try')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'rehmet' }));
+
+    expect(onQueryChange).toHaveBeenCalledWith('rehmet');
+  });
+
   it('highlights matched fragments in visible result text', () => {
     const result: DictionarySearchResult = {
       entry: {
@@ -278,7 +317,9 @@ describe('DictionaryPanel', () => {
 
     const highlight = screen.getByText('good');
     expect(highlight.tagName).toBe('MARK');
-    expect(screen.getByText(/Show 1 more definition/)).toBeInTheDocument();
+    fireEvent.click(screen.getByText(/Show 1 more definition/));
+
+    expect(screen.getByText('excellent')).toBeInTheDocument();
   });
 
   it('highlights converted ULY headword matches from UEY queries', () => {
@@ -374,6 +415,6 @@ function defaultLookupState() {
     entryCount: 350000,
     definitionCount: 500000,
     loadedShardCount: 0,
-    error: null,
+    error: null as string | null,
   };
 }

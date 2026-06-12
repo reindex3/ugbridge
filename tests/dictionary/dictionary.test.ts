@@ -30,17 +30,31 @@ describe('searchDictionary', () => {
     expect(result.matchedText).toBe('book');
   });
 
-  it('finds seeded common words by English definition', () => {
-    const [result] = searchDictionary('water');
-    expect(result.entry.uly).toBe('su');
-    expect(result.entry.uey).toBe('سۇ');
-    expect(result.matchedText).toBe('water');
+  it.each([
+    ['water', 'su', 'سۇ'],
+    ['bread', 'nan', 'نان'],
+    ['pen', 'qelem', 'قەلەم'],
+    ['money', 'pul', 'پۇل'],
+    ['house', 'öy', 'ئۆي'],
+    ['home', 'öy', 'ئۆي'],
+  ])('finds seeded common word %s by English definition', (query, uly, uey) => {
+    const [result] = searchDictionary(query);
+    expect(result.entry.uly).toBe(uly);
+    expect(result.entry.uey).toBe(uey);
+    expect(result.matchedText).toBe(query);
   });
 
   it('finds entries by example text', () => {
     const [result] = searchDictionary('love');
     expect(result.entry.uly).toBe('körimen');
     expect(result.matchedOn).toBe('example');
+  });
+
+  it('normalizes case and repeated whitespace in queries', () => {
+    const [result] = searchDictionary('  THANK   YOU  ');
+    expect(result.entry.uly).toBe('rehmet');
+    expect(result.matchedOn).toBe('definition');
+    expect(result.matchedText).toBe('thank you');
   });
 
   it('can limit search to English definitions', () => {
@@ -96,6 +110,30 @@ describe('searchDictionary', () => {
 
     expect(results[0].entry.id).toBe('exact');
     expect(results[0].matchedText).toBe('book');
+  });
+
+  it('ranks prefix definition matches before included definition matches', () => {
+    const results = searchDictionary('app', [
+      {
+        id: 'included',
+        uey: 'ئۇششاق نۇقۇت',
+        uly: 'ushshaq nuqut',
+        ipa: '',
+        partOfSpeech: 'noun',
+        definitions: ['snap pea'],
+      },
+      {
+        id: 'prefix',
+        uey: 'ئالما',
+        uly: 'alma',
+        ipa: '',
+        partOfSpeech: 'noun',
+        definitions: ['apple'],
+      },
+    ]);
+
+    expect(results[0].entry.id).toBe('prefix');
+    expect(results[0].matchedText).toBe('apple');
   });
 
   it('ranks curated exact English matches before noisy static matches', () => {
@@ -169,6 +207,30 @@ describe('searchDictionary', () => {
     expect(results[0].matchedOn).toBe('definition');
   });
 
+  it('keeps ULY-hinted auto queries on exact ULY headwords', () => {
+    const results = searchDictionary('ghulja', [
+      {
+        id: 'headword',
+        uey: 'غۇلجا',
+        uly: 'ghulja',
+        ipa: '',
+        partOfSpeech: 'proper noun',
+        definitions: ['Ghulja'],
+      },
+      {
+        id: 'english',
+        uey: 'سىناق',
+        uly: 'sinaq',
+        ipa: '',
+        partOfSpeech: 'noun',
+        definitions: ['ghulja'],
+      },
+    ]);
+
+    expect(results[0].entry.id).toBe('headword');
+    expect(results[0].matchedOn).toBe('uly');
+  });
+
   it('keeps ambiguous Latin input as a ULY headword in ULY mode', () => {
     const [result] = searchDictionary(
       'pen',
@@ -234,6 +296,22 @@ describe('searchDictionary', () => {
     ]);
 
     expect(results.map((result) => result.entry.id)).toEqual(['phrase']);
+  });
+
+  it('limits search results after ranking', () => {
+    const results = searchDictionary(
+      'test',
+      Array.from({ length: 20 }, (_, index) => ({
+        id: `entry-${index}`,
+        uey: `سىناق-${index}`,
+        uly: `sinaq-${index}`,
+        ipa: '',
+        partOfSpeech: 'noun',
+        definitions: ['test'],
+      })),
+    );
+
+    expect(results).toHaveLength(12);
   });
 });
 
@@ -302,6 +380,66 @@ describe('suggestDictionary', () => {
           suggestion.value === 'apple',
       ),
     ).toHaveLength(1);
+  });
+
+  it('dedupes repeated suggestions case-insensitively', () => {
+    const suggestions = suggestDictionary('goo', [
+      {
+        id: 'upper',
+        uey: 'ياخشى',
+        uly: 'yaxshi',
+        ipa: '',
+        partOfSpeech: 'adjective',
+        definitions: ['Good'],
+      },
+      {
+        id: 'lower',
+        uey: 'ئوبدان',
+        uly: 'obdan',
+        ipa: '',
+        partOfSpeech: 'adjective',
+        definitions: ['good'],
+      },
+    ]);
+
+    expect(
+      suggestions.filter(
+        (suggestion) =>
+          suggestion.matchedOn === 'definition' &&
+          suggestion.value.toLocaleLowerCase() === 'good',
+      ),
+    ).toHaveLength(1);
+  });
+
+  it('limits suggestions after ranking and dedupe', () => {
+    const suggestions = suggestDictionary(
+      'al',
+      Array.from({ length: 10 }, (_, index) => ({
+        id: `entry-${index}`,
+        uey: `ئا-${index}`,
+        uly: `alma-${index}`,
+        ipa: '',
+        partOfSpeech: 'noun',
+        definitions: [`apple ${index}`],
+      })),
+    );
+
+    expect(suggestions).toHaveLength(6);
+  });
+
+  it('does not run fuzzy suggestions for very short queries', () => {
+    const suggestions = suggestDictionary('bk', [
+      {
+        id: 'kitab',
+        uey: 'كىتاب',
+        uly: 'kitab',
+        ipa: '',
+        partOfSpeech: 'noun',
+        definitions: ['book'],
+      },
+    ]);
+
+    expect(suggestions).toEqual([]);
   });
 
   it('can limit suggestions to English definitions', () => {
@@ -437,6 +575,63 @@ describe('loadStaticDictionaryEntries', () => {
     expect(result.loadedShardCount).toBe(1);
     expect(fetchMock).toHaveBeenCalledWith('/dictionary/shards/uly-y.json');
     expect(fetchMock).not.toHaveBeenCalledWith('/dictionary/shards/uey-64a.json');
+  });
+
+  it('dedupes identical entries loaded from multiple shard families', async () => {
+    const { loadStaticDictionaryEntries } = await importStaticDictionary();
+    const fetchMock = vi.fn(async (url: string) => {
+      if (url === '/dictionary/manifest.json') {
+        return jsonResponse(testManifest());
+      }
+
+      return jsonResponse([['ئاسان', 'asan', ['easy']]]);
+    });
+
+    vi.stubGlobal('fetch', fetchMock);
+
+    const result = await loadStaticDictionaryEntries('easy', 'auto');
+
+    expect(result.loadedShardCount).toBe(2);
+    expect(result.entries).toHaveLength(1);
+    expect(result.entries[0].uly).toBe('asan');
+  });
+
+  it('loads 0-9 buckets for numeric auto queries when shards exist', async () => {
+    const { loadStaticDictionaryEntries } = await importStaticDictionary();
+    const fetchMock = vi.fn(async (url: string) => {
+      if (url === '/dictionary/manifest.json') {
+        return jsonResponse(testManifest());
+      }
+
+      return jsonResponse([['بىر يۈز', 'bir yüz', ['100']]]);
+    });
+
+    vi.stubGlobal('fetch', fetchMock);
+
+    const result = await loadStaticDictionaryEntries('100', 'auto');
+
+    expect(result.loadedShardCount).toBe(2);
+    expect(fetchMock).toHaveBeenCalledWith('/dictionary/shards/english-0-9.json');
+    expect(fetchMock).toHaveBeenCalledWith('/dictionary/shards/uly-0-9.json');
+  });
+
+  it('returns no entries when the manifest has no matching shard bucket', async () => {
+    const { loadStaticDictionaryEntries } = await importStaticDictionary();
+    const fetchMock = vi.fn(async (url: string) => {
+      if (url === '/dictionary/manifest.json') {
+        return jsonResponse(testManifest());
+      }
+
+      throw new Error(`Unexpected shard fetch: ${url}`);
+    });
+
+    vi.stubGlobal('fetch', fetchMock);
+
+    const result = await loadStaticDictionaryEntries('zebra', 'auto');
+
+    expect(result.entries).toEqual([]);
+    expect(result.loadedShardCount).toBe(0);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
   it('builds stable unique ids from the full static entry payload', async () => {
@@ -608,10 +803,12 @@ function testManifest() {
     },
     shards: {
       english: {
+        '0-9': { file: 'shards/english-0-9.json', count: 1 },
         e: { file: 'shards/english-e.json', count: 1 },
         other: { file: 'shards/english-other.json', count: 1 },
       },
       uly: {
+        '0-9': { file: 'shards/uly-0-9.json', count: 1 },
         e: { file: 'shards/uly-e.json', count: 2 },
         y: { file: 'shards/uly-y.json', count: 1 },
       },
