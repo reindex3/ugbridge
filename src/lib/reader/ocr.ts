@@ -11,16 +11,7 @@ export interface ReaderOcrResult {
   confidence: number;
 }
 
-export type ReaderOcrPreprocessingMode =
-  | 'original'
-  | 'balanced'
-  | 'highContrast';
-
 export type ReaderOcrQuality = 'unknown' | 'low' | 'medium' | 'high';
-
-export interface ReaderOcrOptions {
-  preprocessing?: ReaderOcrPreprocessingMode;
-}
 
 let workerPromise: Promise<TesseractWorker> | null = null;
 let activeProgressHandler: ((progress: ReaderOcrProgress) => void) | null =
@@ -29,16 +20,12 @@ let activeProgressHandler: ((progress: ReaderOcrProgress) => void) | null =
 export async function recognizeUeyImage(
   image: File | Blob,
   onProgress?: (progress: ReaderOcrProgress) => void,
-  options: ReaderOcrOptions = {},
 ): Promise<ReaderOcrResult> {
   activeProgressHandler = onProgress ?? null;
 
   try {
     const worker = await getReaderOcrWorker();
-    const preparedImage = await prepareOcrImage(
-      image,
-      options.preprocessing ?? 'balanced',
-    );
+    const preparedImage = await prepareOcrImage(image);
     const result = await worker.recognize(preparedImage);
 
     return {
@@ -100,11 +87,8 @@ function normalizeOcrText(text: string) {
     .trim();
 }
 
-async function prepareOcrImage(
-  image: File | Blob,
-  mode: ReaderOcrPreprocessingMode,
-): Promise<File | Blob> {
-  if (mode === 'original' || typeof document === 'undefined') {
+async function prepareOcrImage(image: File | Blob): Promise<File | Blob> {
+  if (typeof document === 'undefined') {
     return image;
   }
 
@@ -112,11 +96,7 @@ async function prepareOcrImage(
     const source = await loadImageForCanvas(image);
     try {
       const canvas = document.createElement('canvas');
-      const scale = getOcrPreprocessingScale(
-        source.width,
-        source.height,
-        mode,
-      );
+      const scale = getOcrPreprocessingScale(source.width, source.height);
       canvas.width = Math.max(1, Math.round(source.width * scale));
       canvas.height = Math.max(1, Math.round(source.height * scale));
 
@@ -132,7 +112,7 @@ async function prepareOcrImage(
       context.drawImage(source.element, 0, 0, canvas.width, canvas.height);
 
       const data = context.getImageData(0, 0, canvas.width, canvas.height);
-      applyOcrImageProcessing(data.data, mode);
+      applyOcrImageProcessing(data.data);
       context.putImageData(data, 0, 0);
 
       return (await canvasToPngBlob(canvas)) ?? image;
@@ -193,25 +173,21 @@ function loadHtmlImageForCanvas(
 function getOcrPreprocessingScale(
   width: number,
   height: number,
-  mode: ReaderOcrPreprocessingMode,
 ) {
   const longestSide = Math.max(width, height, 1);
-  const targetLongestSide = mode === 'highContrast' ? 2200 : 1600;
-  const maxScale = mode === 'highContrast' ? 2.5 : 2;
+  const targetLongestSide = 2200;
+  const maxScale = 2.5;
   return Math.max(1, Math.min(maxScale, targetLongestSide / longestSide));
 }
 
-function applyOcrImageProcessing(
-  data: Uint8ClampedArray,
-  mode: ReaderOcrPreprocessingMode,
-) {
-  const contrast = mode === 'highContrast' ? 1.7 : 1.28;
+function applyOcrImageProcessing(data: Uint8ClampedArray) {
+  const contrast = 1.7;
 
   for (let index = 0; index < data.length; index += 4) {
     const gray =
       0.299 * data[index] + 0.587 * data[index + 1] + 0.114 * data[index + 2];
     const contrasted = clampByte((gray - 128) * contrast + 128);
-    const value = mode === 'highContrast' ? threshold(contrasted) : contrasted;
+    const value = threshold(contrasted);
 
     data[index] = value;
     data[index + 1] = value;

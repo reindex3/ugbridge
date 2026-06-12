@@ -11,7 +11,6 @@ import {
   Repeat2,
   Search,
   ScanText,
-  SlidersHorizontal,
   Sparkles,
   Upload,
   X,
@@ -19,7 +18,6 @@ import {
 import {
   getReaderOcrQuality,
   recognizeUeyImage,
-  type ReaderOcrPreprocessingMode,
   type ReaderOcrProgress,
 } from '../lib/reader/ocr';
 import type { ReaderTextAnalysis } from '../lib/reader';
@@ -47,14 +45,6 @@ interface ReaderPanelProps {
 
 const TAB_CLASS =
   'inline-flex min-h-10 items-center justify-center gap-2 rounded-md px-3 py-2 text-sm font-semibold transition';
-const OCR_PREPROCESSING_OPTIONS: readonly {
-  value: ReaderOcrPreprocessingMode;
-  label: string;
-}[] = [
-  { value: 'original', label: 'Original' },
-  { value: 'balanced', label: 'Balanced' },
-  { value: 'highContrast', label: 'High contrast' },
-];
 
 export function ReaderPanel({
   value,
@@ -71,8 +61,6 @@ export function ReaderPanel({
 }: ReaderPanelProps) {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreviewUrl, setImagePreviewUrl] = useState('');
-  const [ocrPreprocessing, setOcrPreprocessing] =
-    useState<ReaderOcrPreprocessingMode>('balanced');
   const [ocrProgress, setOcrProgress] = useState<ReaderOcrProgress | null>(
     null,
   );
@@ -119,7 +107,6 @@ export function ReaderPanel({
           setOcrProgress(progress);
           setOcrStatus(progress.status);
         },
-        { preprocessing: ocrPreprocessing },
       );
       if (result.text) {
         onChange(result.text);
@@ -199,10 +186,8 @@ export function ReaderPanel({
             ocrProgress={ocrProgress}
             ocrStatus={ocrStatus}
             ocrConfidence={ocrConfidence}
-            ocrPreprocessing={ocrPreprocessing}
             imageInputRef={imageInputRef}
             onChooseImage={chooseImage}
-            onPreprocessingChange={setOcrPreprocessing}
             onRunOcr={runOcr}
           />
         )}
@@ -305,10 +290,8 @@ function ReaderImageInput({
   ocrProgress,
   ocrStatus,
   ocrConfidence,
-  ocrPreprocessing,
   imageInputRef,
   onChooseImage,
-  onPreprocessingChange,
   onRunOcr,
 }: {
   imageFile: File | null;
@@ -317,10 +300,8 @@ function ReaderImageInput({
   ocrProgress: ReaderOcrProgress | null;
   ocrStatus: string;
   ocrConfidence: number | null;
-  ocrPreprocessing: ReaderOcrPreprocessingMode;
   imageInputRef: React.RefObject<HTMLInputElement>;
   onChooseImage: (file: File | undefined) => void;
-  onPreprocessingChange: (mode: ReaderOcrPreprocessingMode) => void;
   onRunOcr: () => void;
 }) {
   const progressPercent = Math.round((ocrProgress?.progress ?? 0) * 100);
@@ -345,30 +326,6 @@ function ReaderImageInput({
           </span>
           <div className="text-sm font-semibold text-slate-700">
             {imageFile ? imageFile.name : 'Choose an image'}
-          </div>
-          <div className="mx-auto grid w-full max-w-md gap-2">
-            <div className="flex items-center justify-center gap-2 text-xs font-semibold text-slate-500">
-              <SlidersHorizontal className="h-3.5 w-3.5" aria-hidden="true" />
-              OCR preprocessing
-            </div>
-            <div className="grid grid-cols-3 rounded-lg border border-slate-200 bg-white p-1">
-              {OCR_PREPROCESSING_OPTIONS.map((option) => (
-                <button
-                  key={option.value}
-                  type="button"
-                  onClick={() => onPreprocessingChange(option.value)}
-                  disabled={isRecognizing}
-                  className={`min-h-9 rounded-md px-2 py-1 text-xs font-semibold transition ${
-                    ocrPreprocessing === option.value
-                      ? 'bg-indigo-600 text-white shadow-xs'
-                      : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'
-                  } disabled:cursor-not-allowed disabled:opacity-60`}
-                  aria-pressed={ocrPreprocessing === option.value}
-                >
-                  {option.label}
-                </button>
-              ))}
-            </div>
           </div>
           <div className="flex flex-wrap justify-center gap-2">
             <button

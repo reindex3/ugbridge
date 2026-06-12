@@ -285,11 +285,6 @@ describe('App conversion workflow', () => {
     expect(
       screen.getByRole('button', { name: 'Recognize UEY' }),
     ).toBeInTheDocument();
-    expect(screen.getByText('OCR preprocessing')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Balanced' })).toHaveAttribute(
-      'aria-pressed',
-      'true',
-    );
   });
 
   it('saves Reader words for local review', async () => {

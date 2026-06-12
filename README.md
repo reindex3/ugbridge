@@ -54,8 +54,8 @@
   actions.
 - **Recognize UEY from images** through an experimental Image OCR input powered
   by Tesseract.js and the `uig` traineddata model. OCR runs in the browser,
-  lazy-loads only when requested, offers original/balanced/high-contrast local
-  preprocessing, and returns editable text before analysis.
+  lazy-loads only when requested, applies local high-contrast preprocessing,
+  and returns editable text before analysis.
 - **Inspect the letter bridge** from ULY to UEY, including per-segment mapping,
   word-initial hamza behavior, and Uyghur letter forms.
 - **Search offline dictionary data** from the home page or dictionary view by
@@ -251,10 +251,9 @@ not serve the OCR model file.
 
 OCR output is treated as a draft: the recognized UEY text lands in the editable
 Reader text area before conversion, dictionary matching, study, or speech.
-Before recognition, Reader can pass the image through local preprocessing modes:
-original, balanced grayscale/contrast, or high-contrast thresholding. The OCR
-result includes a confidence-derived quality badge so weak scans are easier to
-spot before saving words.
+Reader applies local high-contrast preprocessing before recognition and shows a
+confidence-derived quality badge so weak scans are easier to spot before saving
+words.
 
 Reader word cards can save dictionary matches or unmatched tokens directly into
 the browser-local study profile as review items, without leaving the Reader
