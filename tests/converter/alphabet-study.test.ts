@@ -71,12 +71,10 @@ describe('ALPHABET_STUDY_ENTRIES', () => {
     ).toMatchObject({ uly: 'wélisipit', uey: 'ۋېلىسىپىت' });
   });
 
-  it('attaches pictures to concrete object examples', () => {
-    const concreteExamples = ALPHABET_STUDY_ENTRIES.flatMap((entry) =>
-      entry.examples.filter((example) => example.image),
-    );
+  it('attaches pictures to every visible example', () => {
+    const examples = ALPHABET_STUDY_ENTRIES.flatMap((entry) => entry.examples);
 
-    expect(concreteExamples.length).toBeGreaterThan(40);
+    expect(examples.every((example) => example.image)).toBe(true);
     expect(
       ALPHABET_STUDY_ENTRIES.find((entry) => entry.token === 'ö')?.examples.find(
         (example) => example.uly === 'öy',
