@@ -85,10 +85,10 @@ function AlphabetButton({
 }) {
   const isVowel = ULY_VOWELS.has(entry.token);
   const categoryClass = isVowel
-    ? 'bg-emerald-50 text-slate-950 ring-emerald-200 hover:bg-emerald-100 hover:ring-emerald-300'
+    ? 'bg-emerald-100 text-slate-950 ring-2 ring-emerald-300 hover:ring-emerald-400'
     : entry.kind === 'digraph'
-      ? 'bg-violet-50 text-slate-950 ring-violet-200 hover:bg-violet-100 hover:ring-violet-300'
-      : 'bg-sky-50 text-slate-950 ring-sky-200 hover:bg-sky-100 hover:ring-sky-300';
+      ? 'bg-violet-100 text-slate-950 ring-2 ring-violet-300 hover:ring-violet-400'
+      : 'bg-sky-100 text-slate-950 ring-2 ring-sky-300 hover:ring-sky-400';
 
   return (
     <button
@@ -413,9 +413,9 @@ function formLabelText(label: AlphabetLetterForm['label']) {
 }
 
 function formClass(form: AlphabetStudyExample['label']) {
-  if (form === 'word-initial') return 'bg-amber-100 text-amber-800';
-  if (form === 'initial') return 'bg-sky-100 text-sky-800';
-  if (form === 'medial') return 'bg-violet-100 text-violet-800';
-  if (form === 'final') return 'bg-emerald-100 text-emerald-800';
-  return 'bg-slate-100 text-slate-600';
+  if (form === 'word-initial') return 'bg-amber-100 text-amber-900 ring-1 ring-amber-300';
+  if (form === 'initial') return 'bg-sky-100 text-sky-900 ring-1 ring-sky-300';
+  if (form === 'medial') return 'bg-violet-100 text-violet-900 ring-1 ring-violet-300';
+  if (form === 'final') return 'bg-emerald-100 text-emerald-900 ring-1 ring-emerald-300';
+  return 'bg-slate-200 text-slate-700 ring-1 ring-slate-300';
 }

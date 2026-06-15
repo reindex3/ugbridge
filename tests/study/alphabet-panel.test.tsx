@@ -13,9 +13,21 @@ describe('AlphabetPanel', () => {
     const consonantButton = screen.getByText('b').closest('button');
     const digraphButton = screen.getByText('ch').closest('button');
 
-    expect(vowelButton).toHaveClass('bg-emerald-50', 'ring-emerald-200');
-    expect(consonantButton).toHaveClass('bg-sky-50', 'ring-sky-200');
-    expect(digraphButton).toHaveClass('bg-violet-50', 'ring-violet-200');
+    expect(vowelButton).toHaveClass(
+      'bg-emerald-100',
+      'ring-2',
+      'ring-emerald-300',
+    );
+    expect(consonantButton).toHaveClass(
+      'bg-sky-100',
+      'ring-2',
+      'ring-sky-300',
+    );
+    expect(digraphButton).toHaveClass(
+      'bg-violet-100',
+      'ring-2',
+      'ring-violet-300',
+    );
   });
 
   it('renders a word-initial vowel carrier and vowel as one highlighted segment', () => {

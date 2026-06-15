@@ -112,20 +112,22 @@ export function LearnPanel({ trace, value, onChange }: LearnPanelProps) {
             shape, standalone shape, position, matching ULY letters, and IPA.
           </p>
           {study.words.length ? (
-            <div className="mt-3 grid gap-2">
-              <HighlightLegend
-                ariaLabel="Learn word highlight legend"
-                items={['vowel', 'learn-initial-vowel', 'hamza-carrier']}
-              />
-              <HighlightLegend
-                ariaLabel="Learn form legend"
-                items={[
-                  'initial-form',
-                  'medial-form',
-                  'final-form',
-                  'isolated-form',
-                ]}
-              />
+            <div className="mt-3 grid gap-3">
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+                <HighlightLegend
+                  ariaLabel="Learn word highlight legend"
+                  items={['vowel', 'learn-initial-vowel', 'hamza-carrier']}
+                />
+                <HighlightLegend
+                  ariaLabel="Learn form legend"
+                  items={[
+                    'initial-form',
+                    'medial-form',
+                    'final-form',
+                    'isolated-form',
+                  ]}
+                />
+              </div>
               <div className="flex flex-wrap gap-2 text-xs">
                 <span className="rounded-full bg-emerald-50 px-3 py-1 font-semibold text-emerald-700 ring-1 ring-emerald-100">
                   Mastered {masteredWordCount}/{study.words.length}
@@ -384,10 +386,10 @@ function ReferenceTile({
 }
 
 function formClass(form: UeyStudyLetter['form']) {
-  if (form === 'initial') return 'bg-sky-100 text-sky-800';
-  if (form === 'medial') return 'bg-violet-100 text-violet-800';
-  if (form === 'final') return 'bg-emerald-100 text-emerald-800';
-  return 'bg-slate-100 text-slate-600';
+  if (form === 'initial') return 'bg-sky-100 text-sky-900 ring-1 ring-sky-300';
+  if (form === 'medial') return 'bg-violet-100 text-violet-900 ring-1 ring-violet-300';
+  if (form === 'final') return 'bg-emerald-100 text-emerald-900 ring-1 ring-emerald-300';
+  return 'bg-slate-200 text-slate-700 ring-1 ring-slate-300';
 }
 
 function letterRoleTileClass(role: UeyStudyLetter['role']) {
@@ -412,9 +414,9 @@ function letterRoleCellClass(role: UeyStudyLetter['role']) {
 
 function letterRoleBadgeClass(role: UeyStudyLetter['role']) {
   if (role === 'vowel' || role === 'hamza-vowel') {
-    return 'bg-emerald-100 text-emerald-800';
+    return 'bg-emerald-100 text-emerald-900 ring-1 ring-emerald-300';
   }
-  return 'bg-slate-100 text-slate-600';
+  return 'bg-slate-200 text-slate-700 ring-1 ring-slate-300';
 }
 
 function letterRoleLabel(role: UeyStudyLetter['role']) {

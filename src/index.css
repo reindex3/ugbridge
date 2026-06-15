@@ -136,6 +136,10 @@ html[data-theme='dark'] .border-dashed {
   border-color: var(--color-slate-600);
 }
 
+html[data-theme='dark'] .ring-slate-300 {
+  --tw-ring-color: var(--color-slate-600);
+}
+
 html[data-theme='dark'] .ring-slate-100 {
   --tw-ring-color: var(--color-slate-800);
 }
@@ -211,7 +215,16 @@ html[data-theme='dark'] .bg-sky-100 {
   background-color: var(--color-sky-950);
 }
 
+html[data-theme='dark'] .ring-sky-300 {
+  --tw-ring-color: var(--color-sky-800);
+}
+
+html[data-theme='dark'] .hover\:ring-sky-400:hover {
+  --tw-ring-color: var(--color-sky-700);
+}
+
 html[data-theme='dark'] .text-sky-950,
+html[data-theme='dark'] .text-sky-900,
 html[data-theme='dark'] .text-sky-800,
 html[data-theme='dark'] .text-sky-700 {
   color: var(--color-sky-200);
@@ -222,7 +235,16 @@ html[data-theme='dark'] .bg-violet-100 {
   background-color: var(--color-violet-950);
 }
 
+html[data-theme='dark'] .ring-violet-300 {
+  --tw-ring-color: var(--color-violet-800);
+}
+
+html[data-theme='dark'] .hover\:ring-violet-400:hover {
+  --tw-ring-color: var(--color-violet-700);
+}
+
 html[data-theme='dark'] .text-violet-950,
+html[data-theme='dark'] .text-violet-900,
 html[data-theme='dark'] .text-violet-800,
 html[data-theme='dark'] .text-violet-700 {
   color: var(--color-violet-200);
@@ -245,6 +267,14 @@ html[data-theme='dark'] .ring-emerald-200 {
   --tw-ring-color: var(--color-emerald-800);
 }
 
+html[data-theme='dark'] .ring-emerald-300 {
+  --tw-ring-color: var(--color-emerald-800);
+}
+
+html[data-theme='dark'] .hover\:ring-emerald-400:hover {
+  --tw-ring-color: var(--color-emerald-700);
+}
+
 html[data-theme='dark'] .text-emerald-950,
 html[data-theme='dark'] .text-emerald-900,
 html[data-theme='dark'] .text-emerald-800,
@@ -265,6 +295,10 @@ html[data-theme='dark'] .ring-amber-200 {
   --tw-ring-color: var(--color-amber-800);
 }
 
+html[data-theme='dark'] .ring-amber-300 {
+  --tw-ring-color: var(--color-amber-800);
+}
+
 html[data-theme='dark'] .text-amber-950,
 html[data-theme='dark'] .text-amber-900,
 html[data-theme='dark'] .text-amber-800 {
@@ -277,6 +311,10 @@ html[data-theme='dark'] .bg-rose-100 {
 }
 
 html[data-theme='dark'] .ring-rose-200 {
+  --tw-ring-color: var(--color-rose-800);
+}
+
+html[data-theme='dark'] .ring-rose-300 {
   --tw-ring-color: var(--color-rose-800);
 }
 

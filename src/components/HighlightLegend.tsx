@@ -18,51 +18,51 @@ const LEGEND_CONFIG: Record<
 > = {
   letter: {
     label: 'letter',
-    className: 'bg-sky-100 text-sky-950',
+    className: 'bg-sky-100 text-sky-950 ring-1 ring-sky-300',
   },
   digraph: {
     label: 'digraph',
-    className: 'bg-violet-100 text-violet-950',
+    className: 'bg-violet-100 text-violet-950 ring-1 ring-violet-300',
   },
   vowel: {
     label: 'vowel',
-    className: 'bg-emerald-100 text-emerald-950',
+    className: 'bg-emerald-100 text-emerald-950 ring-1 ring-emerald-300',
   },
   'initial-vowel': {
     label: 'initial vowel',
-    className: 'bg-amber-100 text-amber-950',
+    className: 'bg-amber-100 text-amber-950 ring-1 ring-amber-300',
   },
   'learn-initial-vowel': {
     label: 'initial vowel',
-    className: 'bg-emerald-100 text-emerald-950',
+    className: 'bg-emerald-100 text-emerald-950 ring-1 ring-emerald-300',
   },
   punctuation: {
     label: 'punctuation',
-    className: 'bg-rose-100 text-rose-950',
+    className: 'bg-rose-100 text-rose-950 ring-1 ring-rose-300',
   },
   'hamza-carrier': {
     label: 'hamza carrier',
-    className: 'bg-slate-100 text-slate-600',
+    className: 'bg-slate-200 text-slate-700 ring-1 ring-slate-300',
   },
   'word-initial-form': {
     label: 'word-initial',
-    className: 'bg-amber-100 text-amber-800',
+    className: 'bg-amber-100 text-amber-900 ring-1 ring-amber-300',
   },
   'initial-form': {
     label: 'initial',
-    className: 'bg-sky-100 text-sky-800',
+    className: 'bg-sky-100 text-sky-900 ring-1 ring-sky-300',
   },
   'medial-form': {
     label: 'medial',
-    className: 'bg-violet-100 text-violet-800',
+    className: 'bg-violet-100 text-violet-900 ring-1 ring-violet-300',
   },
   'final-form': {
     label: 'final',
-    className: 'bg-emerald-100 text-emerald-800',
+    className: 'bg-emerald-100 text-emerald-900 ring-1 ring-emerald-300',
   },
   'isolated-form': {
     label: 'isolated',
-    className: 'bg-slate-100 text-slate-600',
+    className: 'bg-slate-200 text-slate-700 ring-1 ring-slate-300',
   },
 };
 
@@ -86,7 +86,7 @@ export function HighlightLegend({
   return (
     <div
       aria-label={ariaLabel}
-      className={`flex flex-wrap gap-2 text-sm text-slate-500 ${className}`}
+      className={`flex flex-wrap items-center gap-2 text-sm text-slate-600 ${className}`}
     >
       {items.map((item) => {
         const config = LEGEND_CONFIG[item];
@@ -111,7 +111,9 @@ function LegendItem({
   label: string;
 }) {
   return (
-    <span className={`rounded-md px-3 py-1.5 font-semibold ${className}`}>
+    <span
+      className={`inline-flex items-center rounded-md px-3 py-1.5 font-semibold shadow-xs ${className}`}
+    >
       {label}
     </span>
   );
