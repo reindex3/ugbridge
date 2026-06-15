@@ -47,4 +47,20 @@ describe('AlphabetPanel', () => {
       0,
     );
   });
+
+  it('shows a picture for concrete example words', () => {
+    render(<AlphabetPanel />);
+
+    const pButton = screen.getByText('p').closest('button');
+    expect(pButton).not.toBeNull();
+
+    fireEvent.click(pButton!);
+
+    const frogPictures = screen.getAllByAltText('Illustration of a frog');
+    expect(frogPictures.length).toBeGreaterThan(0);
+    expect(frogPictures[0]).toHaveAttribute(
+      'src',
+      expect.stringContaining('data:image/svg+xml'),
+    );
+  });
 });

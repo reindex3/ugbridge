@@ -14,12 +14,18 @@ import { traceUlyToUey } from './trace';
 
 export type AlphabetExampleLabel = UeyJoiningForm | 'word-initial';
 
+export interface AlphabetStudyExampleImage {
+  emoji: string;
+  alt: string;
+}
+
 export interface AlphabetStudyExample {
   id: string;
   label: AlphabetExampleLabel;
   uly: string;
   uey: string;
   english: string;
+  image?: AlphabetStudyExampleImage;
   highlightIndexes: number[];
   highlightGlyph: string;
 }
@@ -123,7 +129,62 @@ const PREFERRED_EXAMPLE_BY_TOKEN: Record<string, string> = {
 interface ExampleWord {
   uly: string;
   english: string;
+  image?: AlphabetStudyExampleImage;
 }
+
+const EXAMPLE_IMAGE_BY_ULY: Partial<Record<string, AlphabetStudyExampleImage>> = {
+  alma: { emoji: '🍎', alt: 'Illustration of an apple' },
+  ata: { emoji: '👨', alt: 'Illustration of a father' },
+  béliq: { emoji: '🐟', alt: 'Illustration of a fish' },
+  bina: { emoji: '🏢', alt: 'Illustration of a building' },
+  bilim: { emoji: '📚', alt: 'Illustration of knowledge books' },
+  cheynek: { emoji: '🫖', alt: 'Illustration of a teapot' },
+  dap: { emoji: '🥁', alt: 'Illustration of a dap drum' },
+  depter: { emoji: '📓', alt: 'Illustration of a notebook' },
+  éshik: { emoji: '🚪', alt: 'Illustration of a door' },
+  et: { emoji: '🥩', alt: 'Illustration of meat' },
+  éyiq: { emoji: '🐻', alt: 'Illustration of a bear' },
+  eynek: { emoji: '🪞', alt: 'Illustration of a mirror' },
+  fontan: { emoji: '⛲', alt: 'Illustration of a fountain' },
+  futbol: { emoji: '⚽', alt: 'Illustration of a football' },
+  ghaz: { emoji: '🪿', alt: 'Illustration of a goose' },
+  gül: { emoji: '🌷', alt: 'Illustration of a flower' },
+  harwa: { emoji: '🛒', alt: 'Illustration of a cart' },
+  it: { emoji: '🐕', alt: 'Illustration of a dog' },
+  juwa: { emoji: '🧄', alt: 'Illustration of garlic chives' },
+  kala: { emoji: '🐄', alt: 'Illustration of a cow' },
+  kitab: { emoji: '📘', alt: 'Illustration of a book' },
+  kolléj: { emoji: '🏫', alt: 'Illustration of a college' },
+  kollézh: { emoji: '🏫', alt: 'Illustration of a college' },
+  lampa: { emoji: '💡', alt: 'Illustration of a lamp' },
+  mektep: { emoji: '🏫', alt: 'Illustration of a school' },
+  müshük: { emoji: '🐈', alt: 'Illustration of a cat' },
+  nan: { emoji: '🍞', alt: 'Illustration of bread' },
+  paqa: { emoji: '🐸', alt: 'Illustration of a frog' },
+  pul: { emoji: '💵', alt: 'Illustration of money' },
+  qelem: { emoji: '🖊️', alt: 'Illustration of a pen' },
+  qend: { emoji: '🍬', alt: 'Illustration of sugar' },
+  qiz: { emoji: '👧', alt: 'Illustration of a girl' },
+  qoy: { emoji: '🐑', alt: 'Illustration of a sheep' },
+  rawap: { emoji: '🎸', alt: 'Illustration of a rawap instrument' },
+  "sa'et": { emoji: '🕒', alt: 'Illustration of a clock' },
+  shir: { emoji: '🦁', alt: 'Illustration of a lion' },
+  su: { emoji: '💧', alt: 'Illustration of water' },
+  tagh: { emoji: '⛰️', alt: 'Illustration of a mountain' },
+  telefon: { emoji: '☎️', alt: 'Illustration of a telephone' },
+  tigh: { emoji: '🔪', alt: 'Illustration of a blade' },
+  toshqan: { emoji: '🐇', alt: 'Illustration of a rabbit' },
+  uwa: { emoji: '🪹', alt: 'Illustration of a nest' },
+  wélisipit: { emoji: '🚲', alt: 'Illustration of a bicycle' },
+  yangaq: { emoji: '🌰', alt: 'Illustration of a walnut' },
+  yipek: { emoji: '🧵', alt: 'Illustration of silk thread' },
+  yol: { emoji: '🛣️', alt: 'Illustration of a road' },
+  yolwas: { emoji: '🐅', alt: 'Illustration of a tiger' },
+  zenjir: { emoji: '⛓️', alt: 'Illustration of a chain' },
+  zhurnal: { emoji: '📓', alt: 'Illustration of a journal' },
+  öy: { emoji: '🏠', alt: 'Illustration of a house' },
+  üzüm: { emoji: '🍇', alt: 'Illustration of grapes' },
+};
 
 const EXAMPLE_WORDS: ExampleWord[] = [
   { uly: 'paqa', english: 'frog' },
@@ -259,7 +320,10 @@ const EXAMPLE_WORDS: ExampleWord[] = [
   { uly: 'yipek', english: 'silk' },
   { uly: 'yol', english: 'road' },
   { uly: 'zhurnal', english: 'journal' },
-];
+].map((word) => ({
+  ...word,
+  image: EXAMPLE_IMAGE_BY_ULY[word.uly],
+}));
 
 export const ALPHABET_STUDY_ENTRIES: AlphabetStudyEntry[] = [
   ...ALPHABET_ORDER.map((token) =>
@@ -355,6 +419,7 @@ function makeExamplesForWord(
         uly: word.uly,
         uey: study.output,
         english: word.english,
+        image: word.image,
         highlightIndexes,
         highlightGlyph,
       };

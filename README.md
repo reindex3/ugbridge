@@ -66,10 +66,11 @@
   share links, saved lookup records, copy actions, and lazy-loaded static
   shards.
 - **Study and practice UEY** through vowel-highlighted letter breakdowns,
-  alphabet pages, browser-shaped highlighted examples, connected joining-form
-  samples, local word mastery/review state, letter progress, randomizable quiz
-  sets, saved missed-form review, and UEY/ULY mini quizzes that can focus on
-  learned letters or fall back to all 32 sounds.
+  alphabet pages, browser-shaped highlighted examples, illustrated concrete
+  word examples, connected joining-form samples, local word mastery/review
+  state, letter progress, randomizable quiz sets, saved missed-form review, and
+  UEY/ULY mini quizzes that can focus on learned letters or fall back to all 32
+  sounds.
 - **Customize local workflows** with browser-local custom words, recent
   conversions, ULY input helpers, a privacy-first local study profile with JSON
   export/import and no retained backend profile data, system/day/night theme
@@ -379,11 +380,11 @@ configured in [.firebaserc](.firebaserc).
 ## Testing
 
 The test suite covers converter behavior, round-trip expectations, IPA hints,
-alphabet data and connected form samples, dictionary search, cross-script
-fallbacks, typo suggestions, retryable shard loading, dictionary panel
-interactions, Reader text analysis, app conversion workflows, shareable URL
-state, keyboard shortcuts, text input/output controls, custom transliterations,
-history, learning progress, speech controls, and TTS settings.
+alphabet data, illustrated examples, connected form samples, dictionary search,
+cross-script fallbacks, typo suggestions, retryable shard loading, dictionary
+panel interactions, Reader text analysis, app conversion workflows, shareable
+URL state, keyboard shortcuts, text input/output controls, custom
+transliterations, history, learning progress, speech controls, and TTS settings.
 Lightpanda smoke checks cover the homepage, shared conversion URLs, Reader
 shared text and Image OCR entry, and dictionary `?dict=` result rendering in a
 lightweight browser runtime. Real-browser smoke checks are still useful for

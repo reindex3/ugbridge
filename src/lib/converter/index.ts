@@ -48,4 +48,5 @@ export {
   type AlphabetLetterForm,
   type AlphabetStudyEntry,
   type AlphabetStudyExample,
+  type AlphabetStudyExampleImage,
 } from './alphabet-study';

@@ -9,6 +9,7 @@ import {
   type AlphabetLetterForm,
   type AlphabetStudyEntry,
   type AlphabetStudyExample,
+  type AlphabetStudyExampleImage,
 } from '../lib/converter';
 import { HighlightLegend } from './HighlightLegend';
 
@@ -242,38 +243,72 @@ function AlphabetExampleRow({
   example: AlphabetStudyExample;
 }) {
   return (
-    <div className="grid gap-2 rounded-md bg-white p-3 ring-1 ring-slate-200">
-      <div className="flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
-          <span
-            className={`rounded-full px-2 py-0.5 text-xs font-semibold ${formClass(
-              example.label,
-            )}`}
-          >
-            {labelText(example.label)}
-          </span>
-          <span
-            dir="rtl"
-            lang="ug"
-            className="rounded-md bg-slate-50 px-2 py-1 text-2xl leading-none text-slate-950 ring-1 ring-slate-200"
-            title={`${labelText(example.label)}: ${example.highlightGlyph}`}
-          >
-            {example.highlightGlyph}
+    <div
+      className={`grid gap-3 rounded-md bg-white p-3 ring-1 ring-slate-200 ${
+        example.image ? 'sm:grid-cols-[minmax(0,1fr)_5rem] sm:items-center' : ''
+      }`}
+    >
+      <div className="grid min-w-0 gap-2">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <span
+              className={`rounded-full px-2 py-0.5 text-xs font-semibold ${formClass(
+                example.label,
+              )}`}
+            >
+              {labelText(example.label)}
+            </span>
+            <span
+              dir="rtl"
+              lang="ug"
+              className="rounded-md bg-slate-50 px-2 py-1 text-2xl leading-none text-slate-950 ring-1 ring-slate-200"
+              title={`${labelText(example.label)}: ${example.highlightGlyph}`}
+            >
+              {example.highlightGlyph}
+            </span>
+          </div>
+          <span className="font-mono text-sm font-semibold text-slate-500">
+            {example.uly}
           </span>
         </div>
-        <span className="font-mono text-sm font-semibold text-slate-500">
-          {example.uly}
-        </span>
+        <HighlightedUeyWord example={example} />
+        <div className="flex items-center justify-between gap-3 text-sm">
+          <span className="font-mono font-semibold text-indigo-700">
+            {example.uly}
+          </span>
+          <span className="text-slate-500">{example.english}</span>
+        </div>
       </div>
-      <HighlightedUeyWord example={example} />
-      <div className="flex items-center justify-between gap-3 text-sm">
-        <span className="font-mono font-semibold text-indigo-700">
-          {example.uly}
-        </span>
-        <span className="text-slate-500">{example.english}</span>
-      </div>
+      {example.image ? <AlphabetExampleImage image={example.image} /> : null}
     </div>
   );
+}
+
+function AlphabetExampleImage({
+  image,
+}: {
+  image: AlphabetStudyExampleImage;
+}) {
+  return (
+    <img
+      src={exampleImageDataUri(image.emoji)}
+      alt={image.alt}
+      loading="lazy"
+      className="h-20 w-20 justify-self-center rounded-md bg-slate-50 object-contain p-2 ring-1 ring-slate-200 sm:justify-self-end"
+    />
+  );
+}
+
+function exampleImageDataUri(emoji: string) {
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96"><rect width="96" height="96" rx="12" fill="#f8fafc"/><text x="48" y="61" text-anchor="middle" font-family="Apple Color Emoji, Segoe UI Emoji, Noto Color Emoji, sans-serif" font-size="56">${escapeSvgText(emoji)}</text></svg>`;
+  return `data:image/svg+xml,${encodeURIComponent(svg)}`;
+}
+
+function escapeSvgText(value: string) {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
 }
 
 interface HighlightRect {

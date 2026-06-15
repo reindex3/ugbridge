@@ -55,7 +55,12 @@ describe('ALPHABET_STUDY_ENTRIES', () => {
   it('includes classroom chart example words', () => {
     expect(
       ALPHABET_STUDY_ENTRIES.find((entry) => entry.token === 'p')?.examples[0],
-    ).toMatchObject({ uly: 'paqa', uey: 'پاقا', english: 'frog' });
+    ).toMatchObject({
+      uly: 'paqa',
+      uey: 'پاقا',
+      english: 'frog',
+      image: { alt: 'Illustration of a frog' },
+    });
     expect(
       ALPHABET_STUDY_ENTRIES.find((entry) => entry.token === 'zh')?.examples[0],
     ).toMatchObject({ uly: 'zhurnal', uey: 'ژۇرنال' });
@@ -64,6 +69,19 @@ describe('ALPHABET_STUDY_ENTRIES', () => {
         (example) => example.uly === 'wélisipit',
       ),
     ).toMatchObject({ uly: 'wélisipit', uey: 'ۋېلىسىپىت' });
+  });
+
+  it('attaches pictures to concrete object examples', () => {
+    const concreteExamples = ALPHABET_STUDY_ENTRIES.flatMap((entry) =>
+      entry.examples.filter((example) => example.image),
+    );
+
+    expect(concreteExamples.length).toBeGreaterThan(40);
+    expect(
+      ALPHABET_STUDY_ENTRIES.find((entry) => entry.token === 'ö')?.examples.find(
+        (example) => example.uly === 'öy',
+      )?.image,
+    ).toMatchObject({ emoji: '🏠', alt: 'Illustration of a house' });
   });
 
   it('builds highlighted examples for a dual-joining letter', () => {
