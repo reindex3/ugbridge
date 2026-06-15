@@ -233,6 +233,14 @@ html[data-theme='dark'] .bg-emerald-100 {
   background-color: var(--color-emerald-950);
 }
 
+html[data-theme='dark'] .border-emerald-200 {
+  border-color: var(--color-emerald-800);
+}
+
+html[data-theme='dark'] .ring-emerald-100 {
+  --tw-ring-color: var(--color-emerald-900);
+}
+
 html[data-theme='dark'] .ring-emerald-200 {
   --tw-ring-color: var(--color-emerald-800);
 }

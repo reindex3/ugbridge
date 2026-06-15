@@ -2,6 +2,7 @@ import { useLayoutEffect, useRef, useState } from 'react';
 import { X } from 'lucide-react';
 import {
   ALPHABET_STUDY_ENTRIES,
+  ULY_VOWELS,
   UEY_JOINING_FORM_LABELS,
   ulyTokenToIpa,
   type AlphabetExampleLabel,
@@ -76,6 +77,8 @@ function AlphabetButton({
   selected: boolean;
   onClick: () => void;
 }) {
+  const isVowel = ULY_VOWELS.has(entry.token);
+
   return (
     <button
       type="button"
@@ -84,6 +87,8 @@ function AlphabetButton({
       className={`grid min-h-20 justify-items-center rounded-md px-2 py-2 text-center ring-1 transition ${
         selected
           ? 'bg-indigo-600 text-white ring-indigo-600'
+          : isVowel
+            ? 'bg-emerald-50 text-slate-950 ring-emerald-200 hover:bg-emerald-100 hover:ring-emerald-300'
           : 'bg-slate-50 text-slate-950 ring-slate-200 hover:bg-indigo-50 hover:ring-indigo-100'
       }`}
     >

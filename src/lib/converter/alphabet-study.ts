@@ -39,38 +39,38 @@ export interface AlphabetLetterForm {
 }
 
 const ALPHABET_ORDER = [
-  'p',
-  'b',
-  'e',
   'a',
-  'x',
-  'ch',
-  'j',
+  'e',
+  'b',
+  'p',
   't',
-  'zh',
-  'z',
-  'r',
+  'j',
+  'ch',
+  'x',
   'd',
-  'f',
-  'gh',
-  'sh',
+  'r',
+  'z',
+  'zh',
   's',
-  'ng',
-  'g',
-  'k',
+  'sh',
+  'gh',
+  'f',
   'q',
-  'h',
-  'n',
-  'm',
+  'k',
+  'g',
+  'ng',
   'l',
-  'ü',
-  'ö',
-  'u',
+  'm',
+  'n',
+  'h',
   'o',
-  'y',
-  'i',
-  'é',
+  'u',
+  'ö',
+  'ü',
   'w',
+  'é',
+  'i',
+  'y',
 ] as const;
 
 const DIGRAPH_TOKENS = new Set<string>(['ch', 'sh', 'gh', 'ng', 'zh']);
@@ -273,14 +273,15 @@ function makeAlphabetEntry(
 ): AlphabetStudyEntry {
   const uey =
     kind === 'digraph' ? ULY_TO_UEY_DIGRAPHS[token] : ULY_TO_UEY_LETTERS[token];
+  const forms = buildLetterForms(token, uey);
 
   return {
     token,
     uey,
     displayUey: WORD_INITIAL_VOWEL_BY_TOKEN[token] ?? uey,
     kind,
-    forms: buildLetterForms(token, uey),
-    examples: buildExamples(token, uey),
+    forms,
+    examples: buildExamplesForForms(token, uey, forms),
   };
 }
 
@@ -306,10 +307,17 @@ function buildLetterForms(token: string, uey: string): AlphabetLetterForm[] {
     : forms;
 }
 
-function buildExamples(token: string, uey: string): AlphabetStudyExample[] {
+function buildExamplesForForms(
+  token: string,
+  uey: string,
+  forms: readonly AlphabetLetterForm[],
+): AlphabetStudyExample[] {
+  const availableLabels = new Set(forms.map((form) => form.label));
   const candidates = EXAMPLE_WORDS.flatMap((word) =>
     makeExamplesForWord(token, uey, word),
-  ).sort((a, b) => exampleRank(token, a) - exampleRank(token, b));
+  )
+    .filter((example) => availableLabels.has(example.label))
+    .sort((a, b) => exampleRank(token, a) - exampleRank(token, b));
   const seenForms = new Set<AlphabetExampleLabel>();
   return candidates.filter((example) => {
     if (seenForms.has(example.label)) return false;

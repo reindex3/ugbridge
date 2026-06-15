@@ -70,7 +70,7 @@ describe('LearnPanel', () => {
     expect(consonantCell).not.toHaveClass('ring-2');
   });
 
-  it('makes digraph and vowel reference tiles visually prominent', () => {
+  it('keeps reference tiles neutral and in UEY alphabet order', () => {
     render(
       <LearnPanel
         trace={traceConversion('', 'uly-to-uey')}
@@ -87,11 +87,41 @@ describe('LearnPanel', () => {
     const digraphTile = within(reference!).getByText('ch').parentElement;
     const vowelTile = within(reference!).getByText('a').parentElement;
     const plainTile = within(reference!).getByText('b').parentElement;
+    const eTile = within(reference!).getByText('e').parentElement;
+    const precedes = (before: Element, after: Element) =>
+      Boolean(
+        before.compareDocumentPosition(after) &
+          Node.DOCUMENT_POSITION_FOLLOWING,
+      );
 
-    expect(digraphTile).toHaveClass('border-2', 'bg-indigo-100', 'ring-2');
-    expect(vowelTile).toHaveClass('border-2', 'bg-emerald-100', 'ring-2');
+    expect(precedes(vowelTile!, eTile!)).toBe(true);
+    expect(precedes(eTile!, plainTile!)).toBe(true);
+    expect(precedes(plainTile!, digraphTile!)).toBe(true);
+    expect(digraphTile).toHaveClass('bg-white', 'ring-1');
+    expect(vowelTile).toHaveClass('bg-white', 'ring-1');
     expect(plainTile).toHaveClass('bg-white', 'ring-1');
+    expect(digraphTile).not.toHaveClass('border-2');
+    expect(vowelTile).not.toHaveClass('border-2');
     expect(plainTile).not.toHaveClass('border-2');
+  });
+
+  it('labels word-initial hamza carriers without yellow highlighting', () => {
+    render(
+      <LearnPanel
+        trace={traceConversion('alma', 'uly-to-uey')}
+        value="alma"
+        onChange={vi.fn()}
+      />,
+    );
+
+    const carrierTile = screen.getAllByText('hamza carrier')[0].closest('div');
+    const initialVowelTile = screen
+      .getAllByText('initial vowel')[0]
+      .closest('div');
+
+    expect(carrierTile).toHaveClass('bg-slate-50', 'ring-1');
+    expect(carrierTile).not.toHaveClass('bg-amber-100', 'ring-2');
+    expect(initialVowelTile).toHaveClass('bg-emerald-100', 'ring-2');
   });
 
   it('saves word study progress locally', () => {

@@ -8,47 +8,47 @@ describe('ALPHABET_STUDY_ENTRIES', () => {
   it('includes letters and digraphs with IPA-backed examples', () => {
     expect(ALPHABET_STUDY_ENTRIES).toHaveLength(32);
     expect(ALPHABET_STUDY_ENTRIES[0]).toMatchObject({
-      token: 'p',
-      uey: 'پ',
-      displayUey: 'پ',
+      token: 'a',
+      uey: 'ا',
+      displayUey: 'ئا',
       kind: 'letter',
     });
   });
 
-  it('uses the standard classroom chart order', () => {
+  it('uses the UEY alphabet order', () => {
     expect(ALPHABET_STUDY_ENTRIES.map((entry) => entry.token)).toEqual([
-      'p',
-      'b',
-      'e',
       'a',
-      'x',
-      'ch',
-      'j',
+      'e',
+      'b',
+      'p',
       't',
-      'zh',
-      'z',
-      'r',
+      'j',
+      'ch',
+      'x',
       'd',
-      'f',
-      'gh',
-      'sh',
+      'r',
+      'z',
+      'zh',
       's',
-      'ng',
-      'g',
-      'k',
+      'sh',
+      'gh',
+      'f',
       'q',
-      'h',
-      'n',
-      'm',
+      'k',
+      'g',
+      'ng',
       'l',
-      'ü',
-      'ö',
-      'u',
+      'm',
+      'n',
+      'h',
       'o',
-      'y',
-      'i',
-      'é',
+      'u',
+      'ö',
+      'ü',
       'w',
+      'é',
+      'i',
+      'y',
     ]);
   });
 
@@ -177,6 +177,19 @@ describe('ALPHABET_STUDY_ENTRIES', () => {
     ]);
     expect(entry?.examples.find((example) => example.label === 'isolated'))
       .toMatchObject({ uly: 'dölet', uey: 'دۆلەت', english: 'state' });
+  });
+
+  it('does not show a final form for h', () => {
+    const entry = ALPHABET_STUDY_ENTRIES.find((item) => item.token === 'h');
+
+    expect(entry?.forms.map((form) => form.label)).toEqual([
+      'isolated',
+      'initial',
+      'medial',
+    ]);
+    expect(entry?.examples.map((example) => example.label)).not.toContain(
+      'final',
+    );
   });
 
   it('uses corrected common word examples', () => {

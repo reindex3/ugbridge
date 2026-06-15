@@ -1443,7 +1443,7 @@ function LocalProfileStat({
   detail: string;
 }) {
   return (
-    <div className="border-l-2 border-emerald-200 bg-emerald-50/70 px-3 py-2">
+    <div className="border-l-2 border-emerald-200 bg-emerald-50 px-3 py-2">
       <div className="text-xs font-semibold uppercase tracking-wide text-slate-400">
         {label}
       </div>

@@ -1,10 +1,9 @@
 import { useMemo, useState } from 'react';
 import { CheckCircle2, RotateCcw } from 'lucide-react';
 import {
+  ALPHABET_STUDY_ENTRIES,
   buildUlyToUeyStudy,
   UEY_JOINING_FORM_LABELS,
-  ULY_TO_UEY_DIGRAPHS,
-  ULY_TO_UEY_LETTERS,
   ulyTokenToIpa,
   type ConversionTrace,
   type UeyStudyLetter,
@@ -24,48 +23,6 @@ interface LearnPanelProps {
   value: string;
   onChange: (value: string) => void;
 }
-
-const LETTER_ORDER = [
-  'a',
-  'e',
-  'é',
-  'b',
-  'p',
-  't',
-  'j',
-  'x',
-  'd',
-  'r',
-  'z',
-  's',
-  'f',
-  'q',
-  'k',
-  'g',
-  'l',
-  'm',
-  'n',
-  'h',
-  'o',
-  'u',
-  'ö',
-  'ü',
-  'w',
-  'i',
-  'y',
-];
-
-const DIGRAPH_ORDER = ['ch', 'sh', 'gh', 'ng', 'zh'];
-const VOWEL_TOKENS: readonly string[] = [
-  'a',
-  'e',
-  'é',
-  'i',
-  'o',
-  'u',
-  'ö',
-  'ü',
-];
 
 export function LearnPanel({ trace, value, onChange }: LearnPanelProps) {
   const study = buildUlyToUeyStudy(trace);
@@ -185,19 +142,11 @@ export function LearnPanel({ trace, value, onChange }: LearnPanelProps) {
           ULY to UEY + IPA reference
         </h2>
         <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8">
-          {DIGRAPH_ORDER.map((key) => (
+          {ALPHABET_STUDY_ENTRIES.map((entry) => (
             <ReferenceTile
-              key={key}
-              source={key}
-              output={ULY_TO_UEY_DIGRAPHS[key]}
-              strong
-            />
-          ))}
-          {LETTER_ORDER.map((key) => (
-            <ReferenceTile
-              key={key}
-              source={key}
-              output={ULY_TO_UEY_LETTERS[key]}
+              key={entry.token}
+              source={entry.token}
+              output={entry.uey}
             />
           ))}
         </div>
@@ -392,21 +341,15 @@ function WordShapeCell({ letter }: { letter: UeyStudyLetter }) {
 function ReferenceTile({
   source,
   output,
-  strong = false,
 }: {
   source: string;
   output: string;
-  strong?: boolean;
 }) {
   const ipa = ulyTokenToIpa(source);
-  const isVowel = isVowelToken(source);
 
   return (
     <div
-      className={`grid min-h-20 content-center rounded-md px-2 py-2 text-center ${referenceTileClass(
-        strong,
-        isVowel,
-      )}`}
+      className="grid min-h-20 content-center rounded-md border border-slate-200 bg-white px-2 py-2 text-center text-slate-950 ring-1 ring-slate-200"
     >
       <div className="font-mono text-sm font-semibold">{source}</div>
       <div className="mt-0.5 font-mono text-xs font-semibold text-emerald-700">
@@ -419,20 +362,6 @@ function ReferenceTile({
   );
 }
 
-function isVowelToken(token: string) {
-  return VOWEL_TOKENS.includes(token);
-}
-
-function referenceTileClass(strong: boolean, isVowel: boolean) {
-  if (strong) {
-    return 'border-2 border-indigo-400 bg-indigo-100 text-indigo-950 shadow-sm ring-2 ring-indigo-200';
-  }
-  if (isVowel) {
-    return 'border-2 border-emerald-400 bg-emerald-100 text-emerald-950 shadow-sm ring-2 ring-emerald-200';
-  }
-  return 'border border-slate-200 bg-white text-slate-950 ring-1 ring-slate-200';
-}
-
 function formClass(form: UeyStudyLetter['form']) {
   if (form === 'initial') return 'bg-sky-100 text-sky-800';
   if (form === 'medial') return 'bg-violet-100 text-violet-800';
@@ -441,37 +370,36 @@ function formClass(form: UeyStudyLetter['form']) {
 }
 
 function letterRoleTileClass(role: UeyStudyLetter['role']) {
-  if (role === 'vowel') {
+  if (role === 'vowel' || role === 'hamza-vowel') {
     return 'border-2 border-emerald-400 bg-emerald-100 text-emerald-950 shadow-sm ring-2 ring-emerald-200';
   }
-  if (role === 'hamza-vowel') {
-    return 'border-2 border-amber-400 bg-amber-100 text-amber-950 shadow-sm ring-2 ring-amber-200';
-  }
   if (role === 'carrier') {
-    return 'border-2 border-amber-400 bg-amber-100 text-amber-950 shadow-sm ring-2 ring-amber-200';
+    return 'border border-slate-200 bg-slate-50 text-slate-700 ring-1 ring-slate-200';
   }
   return 'border border-slate-200 bg-white text-slate-950 ring-1 ring-slate-200';
 }
 
 function letterRoleCellClass(role: UeyStudyLetter['role']) {
-  if (role === 'vowel') {
+  if (role === 'vowel' || role === 'hamza-vowel') {
     return 'bg-emerald-100 shadow-sm ring-2 ring-inset ring-emerald-300';
   }
-  if (role === 'hamza-vowel' || role === 'carrier') {
-    return 'bg-amber-100 shadow-sm ring-2 ring-inset ring-amber-300';
+  if (role === 'carrier') {
+    return 'bg-slate-50';
   }
   return 'bg-white';
 }
 
 function letterRoleBadgeClass(role: UeyStudyLetter['role']) {
-  if (role === 'vowel') return 'bg-emerald-100 text-emerald-800';
-  return 'bg-amber-100 text-amber-800';
+  if (role === 'vowel' || role === 'hamza-vowel') {
+    return 'bg-emerald-100 text-emerald-800';
+  }
+  return 'bg-slate-100 text-slate-600';
 }
 
 function letterRoleLabel(role: UeyStudyLetter['role']) {
   if (role === 'vowel') return 'vowel';
   if (role === 'hamza-vowel') return 'initial vowel';
-  if (role === 'carrier') return 'carrier';
+  if (role === 'carrier') return 'hamza carrier';
   return '';
 }
 

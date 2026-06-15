@@ -81,6 +81,18 @@ const dualJoining = (
   joinsAfter: true,
 });
 
+const dualJoiningWithoutFinal = (
+  isolated: string,
+  initial: string,
+  medial: string,
+): UeyLetterInfo => ({
+  isolated,
+  initial,
+  medial,
+  joinsBefore: true,
+  joinsAfter: true,
+});
+
 export const UEY_JOINING_FORM_LABELS: Record<UeyJoiningForm, string> = {
   isolated: 'isolated',
   initial: 'initial',
@@ -115,7 +127,7 @@ export const UEY_LETTER_FORMS: Record<string, UeyLetterInfo> = {
   ل: dualJoining('ﻝ', 'ﻞ', 'ﻟ', 'ﻠ'),
   م: dualJoining('ﻡ', 'ﻢ', 'ﻣ', 'ﻤ'),
   ن: dualJoining('ﻥ', 'ﻦ', 'ﻧ', 'ﻨ'),
-  ھ: dualJoining('ﮪ', 'ﮫ', 'ﮬ', 'ﮭ'),
+  ھ: dualJoiningWithoutFinal('ﮪ', 'ﮬ', 'ﮭ'),
   و: rightJoining('ﻭ', 'ﻮ'),
   ۇ: rightJoining('ﯗ', 'ﯘ'),
   ۆ: rightJoining('ﯙ', 'ﯚ'),
