@@ -1,5 +1,5 @@
 import { act, fireEvent, render, screen } from '@testing-library/react';
-import { useState, type ReactNode } from 'react';
+import { useState } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TextInput } from '../../src/components/TextInput';
 
@@ -59,41 +59,15 @@ describe('TextInput', () => {
     expect(textarea).toHaveAttribute('placeholder', 'ياخشىمۇسىز...');
   });
 
-  it('renders optional content before the textarea', () => {
-    render(
-      <ControlledTextInput
-        initialValue=""
-        mode="uly"
-        beforeTextarea={<span>Highlight legend</span>}
-      />,
-    );
-
-    const legend = screen.getByText('Highlight legend');
-    const textarea = screen.getByLabelText(/ULY/);
-
-    expect(
-      legend.compareDocumentPosition(textarea) &
-        Node.DOCUMENT_POSITION_FOLLOWING,
-    ).toBeTruthy();
-  });
 });
 
 function ControlledTextInput({
   initialValue,
   mode,
-  beforeTextarea,
 }: {
   initialValue: string;
   mode: 'uey' | 'uly';
-  beforeTextarea?: ReactNode;
 }) {
   const [value, setValue] = useState(initialValue);
-  return (
-    <TextInput
-      mode={mode}
-      value={value}
-      onChange={setValue}
-      beforeTextarea={beforeTextarea}
-    />
-  );
+  return <TextInput mode={mode} value={value} onChange={setValue} />;
 }

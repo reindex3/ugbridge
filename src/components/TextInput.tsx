@@ -1,4 +1,4 @@
-import { useRef, type ReactNode } from 'react';
+import { useRef } from 'react';
 import { UlyInputHelper } from './UlyInputHelper';
 
 type ScriptMode = 'uey' | 'uly';
@@ -11,7 +11,6 @@ interface TextInputProps {
   characterCount?: number;
   onClear?: () => void;
   onPasteClipboard?: () => void;
-  beforeTextarea?: ReactNode;
 }
 
 const CONFIG: Record<
@@ -48,7 +47,6 @@ export function TextInput({
   characterCount = 0,
   onClear,
   onPasteClipboard,
-  beforeTextarea,
 }: TextInputProps) {
   const config = CONFIG[mode];
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
@@ -115,7 +113,6 @@ export function TextInput({
         </div>
       </div>
       {mode === 'uly' ? <UlyInputHelper onInsert={insertText} /> : <div className="min-h-8" />}
-      {beforeTextarea}
       <textarea
         ref={textareaRef}
         id="text-input"

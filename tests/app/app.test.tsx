@@ -110,6 +110,25 @@ describe('App conversion workflow', () => {
     ).toBeInTheDocument();
   });
 
+  it('shows the highlight legend above both conversion panels', () => {
+    window.history.pushState({}, '', '/?view=convert&d=uly-to-uey&text=salam');
+    render(<App />);
+
+    const legendStart = screen.getByText('letter');
+    const input = getConversionInput();
+    const output = document.querySelector<HTMLElement>('#text-output');
+
+    expect(output).not.toBeNull();
+    expect(
+      legendStart.compareDocumentPosition(input) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(
+      legendStart.compareDocumentPosition(output!) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
+
   it('shows a low-confidence hint for plain Latin text', () => {
     window.history.pushState({}, '', '/?view=convert');
     render(<App />);

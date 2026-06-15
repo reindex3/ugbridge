@@ -845,7 +845,8 @@ export default function App() {
           />
         ) : activeView === 'convert' ? (
           <>
-            <div className="grid gap-6 md:grid-cols-2">
+            <HighlightLegend />
+            <div className="mt-3 grid gap-6 md:grid-cols-2">
               <TextInput
                 mode={inputMode}
                 value={input}
@@ -854,7 +855,6 @@ export default function App() {
                 characterCount={characterCount}
                 onClear={clearInput}
                 onPasteClipboard={pasteClipboardText}
-                beforeTextarea={<HighlightLegend />}
               />
               <ConversionOutput
                 mode={outputMode}
