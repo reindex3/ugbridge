@@ -410,10 +410,15 @@ describe('App conversion workflow', () => {
       ) as HTMLIFrameElement | null;
 
       expect(iframe?.getAttribute('scrolling')).toBe('no');
+      expect(iframe?.style.transform).toBe('translateX(-10px)');
       expect(
         iframe?.contentDocument?.getElementById('ugbridge-kofi-image-style')
           ?.textContent,
       ).toContain('width: 26px');
+      expect(
+        iframe?.contentDocument?.getElementById('ugbridge-kofi-image-style')
+          ?.textContent,
+      ).toContain('font-size: 13px');
     });
   });
 

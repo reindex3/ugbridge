@@ -97,6 +97,7 @@ const KOFI_WIDGET_SCRIPT_URL =
 const KOFI_WIDGET_CSS_ID = 'ugbridge-kofi';
 const KOFI_WIDGET_BUTTON_TEXT = 'Buy me a coffee';
 const KOFI_WIDGET_COLOR = '#72a4f2';
+const KOFI_WIDGET_OFFSET_X = '-10px';
 const KOFI_WIDGET_IFRAME_STYLE_ID = 'ugbridge-kofi-image-style';
 const KOFI_WIDGET_IFRAME_IDS = [
   `kofi-wo-container${KOFI_WIDGET_CSS_ID}`,
@@ -109,12 +110,16 @@ const KOFI_WIDGET_IFRAME_CSS = `
   }
 
   .floatingchat-donate-button {
+    font-size: 13px !important;
+    letter-spacing: 0 !important;
     min-width: 0 !important;
     overflow: hidden !important;
     padding: 0 16px !important;
   }
 
   .floatingchat-donate-button span {
+    font-size: 13px !important;
+    line-height: 1 !important;
     margin-left: 6px !important;
     white-space: nowrap !important;
   }
@@ -1700,6 +1705,7 @@ function KoFiOverlayWidget() {
 
         iframe.setAttribute('scrolling', 'no');
         iframe.style.overflow = 'hidden';
+        iframe.style.transform = `translateX(${KOFI_WIDGET_OFFSET_X})`;
 
         if (iframeDocument.getElementById(KOFI_WIDGET_IFRAME_STYLE_ID)) {
           return;
