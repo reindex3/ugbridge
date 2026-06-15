@@ -854,6 +854,7 @@ export default function App() {
                 characterCount={characterCount}
                 onClear={clearInput}
                 onPasteClipboard={pasteClipboardText}
+                beforeTextarea={<HighlightLegend />}
               />
               <ConversionOutput
                 mode={outputMode}
@@ -897,7 +898,6 @@ export default function App() {
                 />
               </section>
             ) : null}
-            <HighlightLegend />
             <CustomTransliterationPanel
               entries={customEntries}
               uey={customUey}
@@ -1812,7 +1812,7 @@ function GitHubIcon({ className }: { className: string }) {
 
 function HighlightLegend() {
   return (
-    <div className="mt-4 flex flex-wrap gap-2 text-xs text-slate-500">
+    <div className="flex flex-wrap gap-2 text-sm text-slate-500">
       <LegendItem className="bg-sky-100 text-sky-950" label="letter" />
       <LegendItem className="bg-violet-100 text-violet-950" label="digraph" />
       <LegendItem className="bg-emerald-100 text-emerald-950" label="vowel" />
@@ -1983,7 +1983,7 @@ function LegendItem({
   label: string;
 }) {
   return (
-    <span className={`rounded-sm px-2 py-1 font-medium ${className}`}>
+    <span className={`rounded-md px-3 py-1.5 font-semibold ${className}`}>
       {label}
     </span>
   );
