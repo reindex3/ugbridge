@@ -95,7 +95,7 @@ const SUPPORT_URL = 'https://ko-fi.com/reindex33';
 const KOFI_WIDGET_SCRIPT_URL =
   'https://storage.ko-fi.com/cdn/scripts/overlay-widget.js';
 const KOFI_WIDGET_CSS_ID = 'ugbridge-kofi';
-const KOFI_WIDGET_BUTTON_TEXT = 'Support';
+const KOFI_WIDGET_BUTTON_TEXT = 'Buy me a coffee';
 const KOFI_WIDGET_COLOR = '#72a4f2';
 const KOFI_WIDGET_IFRAME_STYLE_ID = 'ugbridge-kofi-image-style';
 const KOFI_WIDGET_IFRAME_IDS = [
@@ -1226,7 +1226,7 @@ function HomeFooter() {
           className={FOOTER_LINK_CLASS}
         >
           <Heart className="size-4" aria-hidden="true" />
-          Support UG Bridge
+          Buy me a coffee for UG Bridge
         </a>
         <a
           href="https://github.com/reindex3/ugbridge/issues/new"

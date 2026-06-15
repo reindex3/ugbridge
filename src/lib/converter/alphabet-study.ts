@@ -41,6 +41,12 @@ export interface AlphabetLetterForm {
 const ALPHABET_ORDER = [
   'a',
   'e',
+  'é',
+  'i',
+  'o',
+  'u',
+  'ö',
+  'ü',
   'b',
   'p',
   't',
@@ -63,13 +69,7 @@ const ALPHABET_ORDER = [
   'm',
   'n',
   'h',
-  'o',
-  'u',
-  'ö',
-  'ü',
   'w',
-  'é',
-  'i',
   'y',
 ] as const;
 

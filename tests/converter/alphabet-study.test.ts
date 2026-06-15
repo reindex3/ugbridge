@@ -15,10 +15,16 @@ describe('ALPHABET_STUDY_ENTRIES', () => {
     });
   });
 
-  it('uses the UEY alphabet order', () => {
+  it('uses a vowels-first study order', () => {
     expect(ALPHABET_STUDY_ENTRIES.map((entry) => entry.token)).toEqual([
       'a',
       'e',
+      'é',
+      'i',
+      'o',
+      'u',
+      'ö',
+      'ü',
       'b',
       'p',
       't',
@@ -41,13 +47,7 @@ describe('ALPHABET_STUDY_ENTRIES', () => {
       'm',
       'n',
       'h',
-      'o',
-      'u',
-      'ö',
-      'ü',
       'w',
-      'é',
-      'i',
       'y',
     ]);
   });

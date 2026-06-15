@@ -335,12 +335,13 @@ guidance.
 Firebase Web `apiKey` values are public project identifiers, not secrets.
 Real access must be protected with Firebase Security Rules and Authentication.
 
-## Support
+## Buy Me a Coffee
 
-UG Bridge uses Ko-fi's official compact floating support widget, anchored to
-the bottom-right of the page, for [`ko-fi.com/reindex33`](https://ko-fi.com/reindex33).
-The footer keeps a plain Ko-fi link as a fallback. UG Bridge does not process
-payments or store payment details.
+UG Bridge uses Ko-fi's official compact floating "Buy me a coffee" widget,
+anchored to the bottom-right of the page, for
+[`ko-fi.com/reindex33`](https://ko-fi.com/reindex33). The footer keeps a plain
+Ko-fi link as a fallback. UG Bridge does not process payments or store payment
+details.
 
 ## Privacy and Data
 

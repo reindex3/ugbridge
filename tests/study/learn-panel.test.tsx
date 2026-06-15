@@ -70,7 +70,7 @@ describe('LearnPanel', () => {
     expect(consonantCell).not.toHaveClass('ring-2');
   });
 
-  it('keeps reference tiles neutral and in UEY alphabet order', () => {
+  it('keeps reference tiles neutral and in vowels-first study order', () => {
     render(
       <LearnPanel
         trace={traceConversion('', 'uly-to-uey')}
@@ -86,8 +86,11 @@ describe('LearnPanel', () => {
 
     const digraphTile = within(reference!).getByText('ch').parentElement;
     const vowelTile = within(reference!).getByText('a').parentElement;
+    const iTile = within(reference!).getByText('i').parentElement;
+    const oTile = within(reference!).getByText('o').parentElement;
     const plainTile = within(reference!).getByText('b').parentElement;
     const eTile = within(reference!).getByText('e').parentElement;
+    const eyTile = within(reference!).getByText('é').parentElement;
     const precedes = (before: Element, after: Element) =>
       Boolean(
         before.compareDocumentPosition(after) &
@@ -95,7 +98,10 @@ describe('LearnPanel', () => {
       );
 
     expect(precedes(vowelTile!, eTile!)).toBe(true);
-    expect(precedes(eTile!, plainTile!)).toBe(true);
+    expect(precedes(eTile!, eyTile!)).toBe(true);
+    expect(precedes(eyTile!, iTile!)).toBe(true);
+    expect(precedes(iTile!, oTile!)).toBe(true);
+    expect(precedes(oTile!, plainTile!)).toBe(true);
     expect(precedes(plainTile!, digraphTile!)).toBe(true);
     expect(digraphTile).toHaveClass('bg-white', 'ring-1');
     expect(vowelTile).toHaveClass('bg-white', 'ring-1');

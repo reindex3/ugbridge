@@ -357,11 +357,11 @@ describe('App conversion workflow', () => {
     expect(screen.getByLabelText('Dictionary search')).toBeInTheDocument();
   });
 
-  it('loads the Ko-fi widget with a footer support fallback', async () => {
+  it('loads the Ko-fi widget with a footer buy-me-a-coffee fallback', async () => {
     render(<App />);
 
     expect(
-      screen.getByRole('link', { name: 'Support UG Bridge' }),
+      screen.getByRole('link', { name: 'Buy me a coffee for UG Bridge' }),
     ).toHaveAttribute('href', 'https://ko-fi.com/reindex33');
     await waitFor(() => {
       expect(
@@ -397,7 +397,7 @@ describe('App conversion workflow', () => {
         expect.objectContaining({
           type: 'floating-chat',
           'floating-chat.cssId': 'ugbridge-kofi',
-          'floating-chat.donateButton.text': 'Support',
+          'floating-chat.donateButton.text': 'Buy me a coffee',
           'floating-chat.donateButton.background-color': '#72a4f2',
           'floating-chat.donateButton.text-color': '#ffffff',
         }),

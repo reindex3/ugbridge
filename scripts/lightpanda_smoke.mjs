@@ -48,11 +48,11 @@ const checks = [
     expected: ['Image OCR', 'Upload image', 'Recognize UEY'],
   },
   {
-    name: 'learn reference uses neutral UEY alphabet order',
+    name: 'learn reference uses neutral vowels-first order',
     path: '/?view=learn',
     waitScript:
-      "(() => { const tileFor = (text) => Array.from(document.querySelectorAll('section div')).find((item) => item.firstElementChild && item.firstElementChild.textContent === text); const a = tileFor('a'); const e = tileFor('e'); const b = tileFor('b'); const ch = tileFor('ch'); return Boolean(a && e && b && ch && (a.compareDocumentPosition(e) & Node.DOCUMENT_POSITION_FOLLOWING) && (e.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING) && (b.compareDocumentPosition(ch) & Node.DOCUMENT_POSITION_FOLLOWING) && ch.classList.contains('bg-white') && a.classList.contains('bg-white') && !ch.classList.contains('border-2') && !a.classList.contains('border-2')); })()",
-    expected: ['ULY to UEY + IPA reference', 'ch', 'a', 'ا'],
+      "(() => { const tileFor = (text) => Array.from(document.querySelectorAll('section div')).find((item) => item.firstElementChild && item.firstElementChild.textContent === text); const a = tileFor('a'); const e = tileFor('e'); const ey = tileFor('é'); const i = tileFor('i'); const o = tileFor('o'); const b = tileFor('b'); const ch = tileFor('ch'); return Boolean(a && e && ey && i && o && b && ch && (a.compareDocumentPosition(e) & Node.DOCUMENT_POSITION_FOLLOWING) && (e.compareDocumentPosition(ey) & Node.DOCUMENT_POSITION_FOLLOWING) && (ey.compareDocumentPosition(i) & Node.DOCUMENT_POSITION_FOLLOWING) && (i.compareDocumentPosition(o) & Node.DOCUMENT_POSITION_FOLLOWING) && (o.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING) && (b.compareDocumentPosition(ch) & Node.DOCUMENT_POSITION_FOLLOWING) && ch.classList.contains('bg-white') && a.classList.contains('bg-white') && !ch.classList.contains('border-2') && !a.classList.contains('border-2')); })()",
+    expected: ['ULY to UEY + IPA reference', 'ch', 'a', 'é', 'ا'],
   },
   {
     name: 'learn breakdown highlights vowels',
