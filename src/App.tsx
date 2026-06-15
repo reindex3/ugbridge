@@ -47,6 +47,7 @@ import { LearnPanel } from './components/LearnPanel';
 import { AlphabetPanel } from './components/AlphabetPanel';
 import { DictionaryPanel } from './components/DictionaryPanel';
 import { QuizPanel } from './components/QuizPanel';
+import { HighlightLegend } from './components/HighlightLegend';
 import {
   ReaderPanel,
   type ReaderInputMode,
@@ -845,7 +846,7 @@ export default function App() {
           />
         ) : activeView === 'convert' ? (
           <>
-            <HighlightLegend />
+            <HighlightLegend ariaLabel="Convert highlight legend" />
             <div className="mt-3 grid gap-6 md:grid-cols-2">
               <TextInput
                 mode={inputMode}
@@ -1810,24 +1811,6 @@ function GitHubIcon({ className }: { className: string }) {
   );
 }
 
-function HighlightLegend() {
-  return (
-    <div className="flex flex-wrap gap-2 text-sm text-slate-500">
-      <LegendItem className="bg-sky-100 text-sky-950" label="letter" />
-      <LegendItem className="bg-violet-100 text-violet-950" label="digraph" />
-      <LegendItem className="bg-emerald-100 text-emerald-950" label="vowel" />
-      <LegendItem
-        className="bg-amber-100 text-amber-950"
-        label="initial vowel"
-      />
-      <LegendItem
-        className="bg-rose-100 text-rose-950"
-        label="punctuation"
-      />
-    </div>
-  );
-}
-
 function CustomTransliterationPanel({
   entries,
   uey,
@@ -1972,20 +1955,6 @@ function ConversionHistoryPanel({
         ))}
       </div>
     </section>
-  );
-}
-
-function LegendItem({
-  className,
-  label,
-}: {
-  className: string;
-  label: string;
-}) {
-  return (
-    <span className={`rounded-md px-3 py-1.5 font-semibold ${className}`}>
-      {label}
-    </span>
   );
 }
 

@@ -34,7 +34,14 @@ describe('LearnPanel', () => {
       />,
     );
 
-    expect(screen.getAllByText('vowel').length).toBeGreaterThan(0);
+    const breakdown = screen
+      .getByRole('heading', { name: 'UEY letters to ULY and IPA' })
+      .closest('section');
+    expect(breakdown).not.toBeNull();
+    expect(
+      within(breakdown!).getByLabelText('Learn letter highlight legend'),
+    ).toHaveTextContent('vowelinitial vowelhamza carrier');
+    expect(within(breakdown!).getAllByText('vowel').length).toBeGreaterThan(1);
   });
 
   it('makes vowel highlights prominent in breakdown and word shape views', () => {
@@ -46,7 +53,16 @@ describe('LearnPanel', () => {
       />,
     );
 
-    const breakdownVowelTile = screen.getAllByText('vowel')[0].closest('div');
+    const breakdown = screen
+      .getByRole('heading', { name: 'UEY letters to ULY and IPA' })
+      .closest('section');
+    expect(breakdown).not.toBeNull();
+
+    const breakdownVowelTile = within(breakdown!)
+      .getAllByText('vowel')
+      .find((node) => node.closest('div')?.className.includes('border-2'))
+      ?.closest('div');
+    expect(breakdownVowelTile).not.toBeUndefined();
     expect(breakdownVowelTile).toHaveClass(
       'border-2',
       'bg-emerald-100',
@@ -57,6 +73,12 @@ describe('LearnPanel', () => {
       .getByRole('heading', { name: 'Word shape study' })
       .closest('section');
     expect(wordShape).not.toBeNull();
+    expect(
+      within(wordShape!).getByLabelText('Learn word highlight legend'),
+    ).toHaveTextContent('vowelinitial vowelhamza carrier');
+    expect(within(wordShape!).getByLabelText('Learn form legend')).toHaveTextContent(
+      'initialmedialfinalisolated',
+    );
 
     const vowelCell = within(wordShape!)
       .getByText('a')
@@ -120,11 +142,22 @@ describe('LearnPanel', () => {
       />,
     );
 
-    const carrierTile = screen.getAllByText('hamza carrier')[0].closest('div');
-    const initialVowelTile = screen
-      .getAllByText('initial vowel')[0]
-      .closest('div');
+    const breakdown = screen
+      .getByRole('heading', { name: 'UEY letters to ULY and IPA' })
+      .closest('section');
+    expect(breakdown).not.toBeNull();
 
+    const carrierTile = within(breakdown!)
+      .getAllByText('hamza carrier')
+      .find((node) => node.closest('div')?.className.includes('bg-slate-50'))
+      ?.closest('div');
+    const initialVowelTile = within(breakdown!)
+      .getAllByText('initial vowel')
+      .find((node) => node.closest('div')?.className.includes('border-2'))
+      ?.closest('div');
+
+    expect(carrierTile).not.toBeUndefined();
+    expect(initialVowelTile).not.toBeUndefined();
     expect(carrierTile).toHaveClass('bg-slate-50', 'ring-1');
     expect(carrierTile).not.toHaveClass('bg-amber-100', 'ring-2');
     expect(initialVowelTile).toHaveClass('bg-emerald-100', 'ring-2');

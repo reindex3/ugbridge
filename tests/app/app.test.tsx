@@ -114,7 +114,7 @@ describe('App conversion workflow', () => {
     window.history.pushState({}, '', '/?view=convert&d=uly-to-uey&text=salam');
     render(<App />);
 
-    const legendStart = screen.getByText('letter');
+    const legendStart = screen.getByLabelText('Convert highlight legend');
     const input = getConversionInput();
     const output = document.querySelector<HTMLElement>('#text-output');
 

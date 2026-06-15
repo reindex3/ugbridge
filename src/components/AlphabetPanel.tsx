@@ -10,6 +10,7 @@ import {
   type AlphabetStudyEntry,
   type AlphabetStudyExample,
 } from '../lib/converter';
+import { HighlightLegend } from './HighlightLegend';
 
 export function AlphabetPanel() {
   const [selectedToken, setSelectedToken] = useState<string | null>(null);
@@ -38,6 +39,11 @@ export function AlphabetPanel() {
             {ALPHABET_STUDY_ENTRIES.length} sounds
           </span>
         </div>
+        <HighlightLegend
+          ariaLabel="Alphabet highlight legend"
+          className="mb-4"
+          items={['letter', 'digraph', 'vowel']}
+        />
         <div className="grid grid-cols-4 gap-2 sm:grid-cols-6 lg:grid-cols-8">
           {ALPHABET_STUDY_ENTRIES.map((entry) => (
             <AlphabetButton
@@ -78,6 +84,11 @@ function AlphabetButton({
   onClick: () => void;
 }) {
   const isVowel = ULY_VOWELS.has(entry.token);
+  const categoryClass = isVowel
+    ? 'bg-emerald-50 text-slate-950 ring-emerald-200 hover:bg-emerald-100 hover:ring-emerald-300'
+    : entry.kind === 'digraph'
+      ? 'bg-violet-50 text-slate-950 ring-violet-200 hover:bg-violet-100 hover:ring-violet-300'
+      : 'bg-sky-50 text-slate-950 ring-sky-200 hover:bg-sky-100 hover:ring-sky-300';
 
   return (
     <button
@@ -87,9 +98,7 @@ function AlphabetButton({
       className={`grid min-h-20 justify-items-center rounded-md px-2 py-2 text-center ring-1 transition ${
         selected
           ? 'bg-indigo-600 text-white ring-indigo-600'
-          : isVowel
-            ? 'bg-emerald-50 text-slate-950 ring-emerald-200 hover:bg-emerald-100 hover:ring-emerald-300'
-          : 'bg-slate-50 text-slate-950 ring-slate-200 hover:bg-indigo-50 hover:ring-indigo-100'
+          : categoryClass
       }`}
     >
       <span className="font-mono text-sm font-bold">{entry.token}</span>
@@ -167,6 +176,18 @@ function AlphabetDetails({
           </button>
         </div>
       </div>
+
+      <HighlightLegend
+        ariaLabel="Alphabet form legend"
+        className="mt-4"
+        items={[
+          'word-initial-form',
+          'initial-form',
+          'medial-form',
+          'final-form',
+          'isolated-form',
+        ]}
+      />
 
       <div className="mt-4 grid gap-2">
         <AlphabetForms forms={entry.forms} />

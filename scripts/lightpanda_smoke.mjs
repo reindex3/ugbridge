@@ -58,15 +58,15 @@ const checks = [
     name: 'learn breakdown highlights vowels',
     path: '/?view=learn&text=yaxshimisiz',
     waitScript:
-      "(() => { const vowelBadge = Array.from(document.querySelectorAll('span')).find((item) => item.textContent === 'vowel'); const tile = vowelBadge && vowelBadge.closest('div'); const shapeHeading = Array.from(document.querySelectorAll('h2')).find((item) => item.textContent === 'Word shape study'); const shapeSection = shapeHeading && shapeHeading.closest('section'); const vowelCell = shapeSection && Array.from(shapeSection.querySelectorAll('dl')).find((item) => Array.from(item.querySelectorAll('dd')).some((dd) => dd.textContent === 'a'))?.parentElement; return Boolean(tile && vowelCell && tile.classList.contains('bg-emerald-100') && tile.classList.contains('border-2') && vowelCell.classList.contains('bg-emerald-100') && vowelCell.classList.contains('ring-2')); })()",
-    expected: ['yaxshimisiz', 'vowel', 'Word shape study'],
+      "(() => { const bridgeHeading = Array.from(document.querySelectorAll('h2')).find((item) => item.textContent === 'UEY letters to ULY and IPA'); const bridgeSection = bridgeHeading && bridgeHeading.closest('section'); const vowelBadge = bridgeSection && Array.from(bridgeSection.querySelectorAll('span')).find((item) => item.textContent === 'vowel' && item.closest('div')?.classList.contains('border-2')); const tile = vowelBadge && vowelBadge.closest('div'); const shapeHeading = Array.from(document.querySelectorAll('h2')).find((item) => item.textContent === 'Word shape study'); const shapeSection = shapeHeading && shapeHeading.closest('section'); const vowelCell = shapeSection && Array.from(shapeSection.querySelectorAll('dl')).find((item) => Array.from(item.querySelectorAll('dd')).some((dd) => dd.textContent === 'a'))?.parentElement; return Boolean(tile && vowelCell && tile.classList.contains('bg-emerald-100') && tile.classList.contains('border-2') && vowelCell.classList.contains('bg-emerald-100') && vowelCell.classList.contains('ring-2')); })()",
+    expected: ['yaxshimisiz', 'vowel', 'hamza carrier', 'Word shape study'],
   },
   {
     name: 'alphabet detail covers right-joining vowel forms',
     path: '/?view=alphabet',
     waitScript:
       "(() => { const body = document.body; if (!body) return false; const buttons = Array.from(document.querySelectorAll('button')); const button = buttons.find((item) => item.textContent && item.textContent.includes('ö')); if (button && !body.textContent.includes('dölet')) button.click(); return body.textContent.includes('dölet') && body.textContent.includes('دۆلەت') && body.textContent.includes('isolated'); })()",
-    expected: ['Learn alphabet', 'ö', 'isolated', 'dölet', 'دۆلەت'],
+    expected: ['Learn alphabet', 'letter', 'digraph', 'vowel', 'isolated', 'dölet', 'دۆلەت'],
   },
 ];
 

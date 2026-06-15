@@ -16,6 +16,7 @@ import {
   saveStudyProgress,
   type StudyWordProgressRecord,
 } from '../lib/local-profile';
+import { HighlightLegend } from './HighlightLegend';
 import { TextInput } from './TextInput';
 
 interface LearnPanelProps {
@@ -91,6 +92,11 @@ export function LearnPanel({ trace, value, onChange }: LearnPanelProps) {
                 right to left
               </span>
             </div>
+            <HighlightLegend
+              ariaLabel="Learn letter highlight legend"
+              className="mb-4"
+              items={['vowel', 'learn-initial-vowel', 'hamza-carrier']}
+            />
             <LetterBridge words={study.words} />
           </section>
         </div>
@@ -106,15 +112,30 @@ export function LearnPanel({ trace, value, onChange }: LearnPanelProps) {
             shape, standalone shape, position, matching ULY letters, and IPA.
           </p>
           {study.words.length ? (
-            <div className="mt-3 flex flex-wrap gap-2 text-xs">
-              <span className="rounded-full bg-emerald-50 px-3 py-1 font-semibold text-emerald-700 ring-1 ring-emerald-100">
-                Mastered {masteredWordCount}/{study.words.length}
-              </span>
-              {reviewWordCount ? (
-                <span className="rounded-full bg-amber-50 px-3 py-1 font-semibold text-amber-700 ring-1 ring-amber-100">
-                  Review {reviewWordCount}
+            <div className="mt-3 grid gap-2">
+              <HighlightLegend
+                ariaLabel="Learn word highlight legend"
+                items={['vowel', 'learn-initial-vowel', 'hamza-carrier']}
+              />
+              <HighlightLegend
+                ariaLabel="Learn form legend"
+                items={[
+                  'initial-form',
+                  'medial-form',
+                  'final-form',
+                  'isolated-form',
+                ]}
+              />
+              <div className="flex flex-wrap gap-2 text-xs">
+                <span className="rounded-full bg-emerald-50 px-3 py-1 font-semibold text-emerald-700 ring-1 ring-emerald-100">
+                  Mastered {masteredWordCount}/{study.words.length}
                 </span>
-              ) : null}
+                {reviewWordCount ? (
+                  <span className="rounded-full bg-amber-50 px-3 py-1 font-semibold text-amber-700 ring-1 ring-amber-100">
+                    Review {reviewWordCount}
+                  </span>
+                ) : null}
+              </div>
             </div>
           ) : null}
         </div>
