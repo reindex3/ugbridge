@@ -1,19 +1,37 @@
+type PaddleOcrModule = typeof import('@paddleocr/paddleocr-js');
+type PaddleOcrInstance = Awaited<
+  ReturnType<PaddleOcrModule['PaddleOCR']['create']>
+>;
 type TesseractModule = typeof import('tesseract.js');
 type TesseractWorker = Awaited<ReturnType<TesseractModule['createWorker']>>;
+
+const PP_OCR_MODEL_BASE_PATH = '/ocr-models/ppocrv5';
+const PP_OCR_DETECTION_MODEL = 'PP-OCRv5_mobile_det';
+const PP_OCR_RECOGNITION_MODEL = 'arabic_PP-OCRv5_mobile_rec';
+const PP_OCR_DETECTION_MODEL_URL = `${PP_OCR_MODEL_BASE_PATH}/PP-OCRv5_mobile_det_onnx_infer.tar`;
+const PP_OCR_RECOGNITION_MODEL_URL = `${PP_OCR_MODEL_BASE_PATH}/arabic_PP-OCRv5_mobile_rec_onnx_infer.tar`;
+const PP_OCR_WASM_PATHS =
+  'https://cdn.jsdelivr.net/npm/onnxruntime-web@1.24.3/dist/';
+const PP_OCR_MIN_CONFIDENCE = 75;
 
 export interface ReaderOcrProgress {
   status: string;
   progress: number;
 }
 
+export type ReaderOcrEngine = 'paddle' | 'tesseract';
+
 export interface ReaderOcrResult {
   text: string;
   confidence: number;
+  engine: ReaderOcrEngine;
+  fallbackFrom?: ReaderOcrEngine;
 }
 
 export type ReaderOcrQuality = 'unknown' | 'low' | 'medium' | 'high';
 
-let workerPromise: Promise<TesseractWorker> | null = null;
+let paddleOcrPromise: Promise<PaddleOcrInstance> | null = null;
+let tesseractWorkerPromise: Promise<TesseractWorker> | null = null;
 let activeProgressHandler: ((progress: ReaderOcrProgress) => void) | null =
   null;
 
@@ -24,13 +42,29 @@ export async function recognizeUeyImage(
   activeProgressHandler = onProgress ?? null;
 
   try {
-    const worker = await getReaderOcrWorker();
-    const preparedImage = await prepareOcrImage(image);
-    const result = await worker.recognize(preparedImage);
+    try {
+      const paddleResult = await recognizeWithPaddleOcr(image, onProgress);
+      if (isUsablePaddleOcrResult(paddleResult)) {
+        return paddleResult;
+      }
 
+      onProgress?.({
+        status: paddleResult.text
+          ? 'PP-OCR low quality; trying Tesseract'
+          : 'PP-OCR empty; trying Tesseract',
+        progress: 0.72,
+      });
+    } catch {
+      onProgress?.({
+        status: 'PP-OCR failed; trying Tesseract',
+        progress: 0.72,
+      });
+    }
+
+    const tesseractResult = await recognizeWithTesseract(image);
     return {
-      text: normalizeOcrText(result.data.text),
-      confidence: Math.round(result.data.confidence),
+      ...tesseractResult,
+      fallbackFrom: 'paddle',
     };
   } finally {
     activeProgressHandler = null;
@@ -38,10 +72,7 @@ export async function recognizeUeyImage(
 }
 
 export async function terminateReaderOcrWorker() {
-  if (!workerPromise) return;
-  const worker = await workerPromise;
-  await worker.terminate();
-  workerPromise = null;
+  await Promise.all([terminatePaddleOcr(), terminateTesseractWorker()]);
 }
 
 export function getReaderOcrQuality(
@@ -55,12 +86,92 @@ export function getReaderOcrQuality(
   return 'low';
 }
 
-async function getReaderOcrWorker() {
-  workerPromise ??= createReaderOcrWorker();
-  return workerPromise;
+async function recognizeWithPaddleOcr(
+  image: File | Blob,
+  onProgress?: (progress: ReaderOcrProgress) => void,
+): Promise<ReaderOcrResult> {
+  onProgress?.({ status: 'Loading PP-OCR v5', progress: 0.08 });
+  const ocr = await getPaddleOcr();
+
+  onProgress?.({ status: 'Recognizing with PP-OCR v5', progress: 0.46 });
+  const [result] = await ocr.predict(image);
+  const items = result?.items ?? [];
+
+  onProgress?.({ status: 'PP-OCR v5 complete', progress: 1 });
+  return {
+    text: normalizeOcrText(items.map((item) => item.text).join('\n')),
+    confidence: getPaddleOcrConfidence(items.map((item) => item.score)),
+    engine: 'paddle',
+  };
 }
 
-async function createReaderOcrWorker() {
+async function recognizeWithTesseract(
+  image: File | Blob,
+): Promise<ReaderOcrResult> {
+  const worker = await getTesseractWorker();
+  const preparedImage = await prepareOcrImage(image);
+  const result = await worker.recognize(preparedImage);
+
+  return {
+    text: normalizeOcrText(result.data.text),
+    confidence: Math.round(result.data.confidence),
+    engine: 'tesseract',
+  };
+}
+
+async function getPaddleOcr() {
+  paddleOcrPromise ??= createPaddleOcr().catch((error) => {
+    paddleOcrPromise = null;
+    throw error;
+  });
+  return paddleOcrPromise;
+}
+
+async function createPaddleOcr() {
+  const { PaddleOCR } = await import('@paddleocr/paddleocr-js');
+
+  return PaddleOCR.create({
+    textDetectionModelName: PP_OCR_DETECTION_MODEL,
+    textRecognitionModelName: PP_OCR_RECOGNITION_MODEL,
+    textDetectionModelAsset: {
+      url: PP_OCR_DETECTION_MODEL_URL,
+    },
+    textRecognitionModelAsset: {
+      url: PP_OCR_RECOGNITION_MODEL_URL,
+    },
+    worker: false,
+    ortOptions: {
+      backend: 'wasm',
+      numThreads: 1,
+      simd: true,
+      wasmPaths: PP_OCR_WASM_PATHS,
+    },
+  });
+}
+
+async function terminatePaddleOcr() {
+  if (!paddleOcrPromise) return;
+  const ocr = await paddleOcrPromise;
+  await ocr.dispose();
+  paddleOcrPromise = null;
+}
+
+async function getTesseractWorker() {
+  tesseractWorkerPromise ??= createTesseractWorker().catch((error) => {
+    tesseractWorkerPromise = null;
+    throw error;
+  });
+  return tesseractWorkerPromise;
+}
+
+async function terminateTesseractWorker() {
+  if (!tesseractWorkerPromise) return;
+  const worker = await tesseractWorkerPromise;
+  await worker.terminate();
+  tesseractWorkerPromise = null;
+}
+
+async function createTesseractWorker() {
   const tesseract = await import('tesseract.js');
   const worker = await tesseract.createWorker('uig', tesseract.OEM.LSTM_ONLY, {
     logger: (message) => {
@@ -77,6 +188,19 @@ async function createReaderOcrWorker() {
   });
 
   return worker;
+}
+
+function getPaddleOcrConfidence(scores: number[]) {
+  const validScores = scores.filter((score) => Number.isFinite(score));
+  if (!validScores.length) return 0;
+
+  const averageScore =
+    validScores.reduce((total, score) => total + score, 0) / validScores.length;
+  return Math.round(averageScore * 100);
+}
+
+export function isUsablePaddleOcrResult(result: ReaderOcrResult) {
+  return Boolean(result.text) && result.confidence >= PP_OCR_MIN_CONFIDENCE;
 }
 
 function normalizeOcrText(text: string) {

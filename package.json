@@ -21,6 +21,7 @@
     "deploy": "npm run build && npx firebase-tools deploy --only hosting"
   },
   "dependencies": {
+    "@paddleocr/paddleocr-js": "^0.4.2",
     "firebase": "^12.13.0",
     "lucide-react": "^1.16.0",
     "msedge-tts": "^2.0.5",

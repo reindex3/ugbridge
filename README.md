@@ -53,9 +53,9 @@
   fallback, `?view=reader&text=` share links, and direct save/study/convert
   actions.
 - **Recognize UEY from images** through an experimental Image OCR input powered
-  by Tesseract.js and the `uig` traineddata model. OCR runs in the browser,
-  lazy-loads only when requested, applies local high-contrast preprocessing,
-  and returns editable text before analysis.
+  by browser-side PP-OCRv5 with Tesseract.js as a fallback. OCR runs in the
+  browser, lazy-loads only when requested, applies local high-contrast
+  preprocessing for Tesseract, and returns editable text before analysis.
 - **Inspect the letter bridge** from ULY to UEY, including per-segment mapping,
   word-initial hamza behavior, and Uyghur letter forms.
 - **Search offline dictionary data** from the home page or dictionary view by
@@ -116,7 +116,7 @@ npm run dictionary:build # rebuild generated dictionary shards
 - Vite + React 18 + TypeScript
 - Tailwind CSS v4 with the `@tailwindcss/vite` plugin
 - Lucide React icons
-- Tesseract.js for optional browser-side Uyghur OCR
+- PaddleOCR.js and Tesseract.js for optional browser-side Uyghur OCR
 - Vitest + Testing Library
 - Firebase Hosting
 - Firebase Web SDK initialized for future Auth / Firestore use
@@ -157,6 +157,7 @@ tests/                       # Vitest specs grouped by product area
 public/
 ├── dictionary/              # generated static dictionary shards
 ├── fonts/                   # bundled webfont assets and attribution
+├── ocr-models/              # PP-OCRv5 ONNX model archives for browser OCR
 ├── manifest.webmanifest
 ├── icon.svg
 └── sw.js
@@ -250,16 +251,23 @@ ULY form. If an exact token misses, Reader tries a short list of simple suffix
 roots such as `sizni` → `siz` and `kitablar` → `kitab`.
 
 Image OCR is a Reader input mode, not a separate top-level product surface. It
-uses `tesseract.js` with language code `uig`. The worker, WASM core, and
-`uig.traineddata.gz` are loaded lazily from public CDNs when a user runs OCR,
-then cached by the browser/Tesseract.js where supported. Firebase Hosting does
-not serve the OCR model file.
+tries PP-OCRv5 first through `@paddleocr/paddleocr-js`, using the mobile text
+detection model plus `arabic_PP-OCRv5_mobile_rec`, which covers Uyghur Arabic
+script. The PP-OCRv5 ONNX model archives are served from
+`public/ocr-models/ppocrv5/` because the upstream model host does not expose the
+CORS headers needed for direct browser fetches.
+
+If PP-OCRv5 fails to initialize, fails to recognize, or returns no text, Reader
+falls back to `tesseract.js` with language code `uig`. The Tesseract worker,
+WASM core, and `uig.traineddata.gz` are loaded lazily from public CDNs when a
+fallback run is needed, then cached by the browser/Tesseract.js where
+supported.
 
 OCR output is treated as a draft: the recognized UEY text lands in the editable
 Reader text area before conversion, dictionary matching, study, or speech.
-Reader applies local high-contrast preprocessing before recognition and shows a
-confidence-derived quality badge so weak scans are easier to spot before saving
-words.
+Reader applies local high-contrast preprocessing before Tesseract fallback
+recognition and shows a confidence-derived quality badge so weak scans are
+easier to spot before saving words.
 
 Reader word cards can save dictionary matches or unmatched tokens directly into
 the browser-local study profile as review items, without leaving the Reader
@@ -353,10 +361,11 @@ Stored values are normalized on load, and invalid entries are ignored instead
 of being restored into the UI.
 
 The app sends text to a network service only when a user configures or selects
-a TTS provider that requires an endpoint. Image OCR downloads Tesseract assets
-and Uyghur traineddata from public CDNs on demand, but image recognition itself
-runs in the browser. The optional support widget loads Ko-fi assets from Ko-fi's
-CDN so supporters can open the Ko-fi panel from the site.
+a TTS provider that requires an endpoint. Image OCR downloads PP-OCRv5 runtime
+assets on demand and may download Tesseract assets and Uyghur traineddata from
+public CDNs when fallback is needed, but image recognition itself runs in the
+browser. The optional support widget loads Ko-fi assets from Ko-fi's CDN so
+supporters can open the Ko-fi panel from the site.
 
 ## Deployment
 

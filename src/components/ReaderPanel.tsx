@@ -112,7 +112,7 @@ export function ReaderPanel({
         onChange(result.text);
         onModeChange('text');
         setOcrConfidence(result.confidence);
-        setOcrStatus('OCR complete');
+        setOcrStatus(getReaderOcrCompleteStatus(result));
       } else {
         setOcrStatus('No text recognized');
       }
@@ -713,6 +713,16 @@ function scriptLabel(script: ReaderTextAnalysis['sourceScript']) {
   if (script === 'uly') return 'ULY';
   if (script === 'mixed') return 'Mixed';
   return 'Unknown';
+}
+
+function getReaderOcrCompleteStatus(
+  result: Awaited<ReturnType<typeof recognizeUeyImage>>,
+) {
+  if (result.engine === 'paddle') return 'PP-OCR v5 complete';
+  if (result.fallbackFrom === 'paddle') {
+    return 'Tesseract fallback complete';
+  }
+  return 'OCR complete';
 }
 
 function ocrQualityLabel(quality: ReturnType<typeof getReaderOcrQuality>) {
