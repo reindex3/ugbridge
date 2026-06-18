@@ -1,7 +1,11 @@
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { LearnPanel } from '../../src/components/LearnPanel';
-import { traceConversion } from '../../src/lib/converter';
+import {
+  ALPHABET_STUDY_ENTRIES,
+  traceConversion,
+  ulyTokenToIpa,
+} from '../../src/lib/converter';
 
 describe('LearnPanel', () => {
   beforeEach(() => {
@@ -92,7 +96,7 @@ describe('LearnPanel', () => {
     expect(consonantCell).not.toHaveClass('ring-2');
   });
 
-  it('keeps reference tiles neutral and in vowels-first study order', () => {
+  it('aligns the reference tiles with the Alphabet grid', () => {
     render(
       <LearnPanel
         trace={traceConversion('', 'uly-to-uey')}
@@ -125,12 +129,19 @@ describe('LearnPanel', () => {
     expect(precedes(iTile!, oTile!)).toBe(true);
     expect(precedes(oTile!, plainTile!)).toBe(true);
     expect(precedes(plainTile!, digraphTile!)).toBe(true);
-    expect(digraphTile).toHaveClass('bg-white', 'ring-1');
-    expect(vowelTile).toHaveClass('bg-white', 'ring-1');
-    expect(plainTile).toHaveClass('bg-white', 'ring-1');
-    expect(digraphTile).not.toHaveClass('border-2');
-    expect(vowelTile).not.toHaveClass('border-2');
-    expect(plainTile).not.toHaveClass('border-2');
+    expect(vowelTile).toHaveClass('bg-emerald-100', 'ring-2');
+    expect(plainTile).toHaveClass('bg-sky-100', 'ring-2');
+    expect(digraphTile).toHaveClass('bg-violet-100', 'ring-2');
+    expect(within(vowelTile!).getByText('ئا')).toBeInTheDocument();
+    expect(within(eyTile!).getByText('ئې')).toBeInTheDocument();
+
+    for (const entry of ALPHABET_STUDY_ENTRIES) {
+      const tile = within(reference!).getByText(entry.token).parentElement;
+      expect(tile, entry.token).toHaveTextContent(entry.displayUey);
+      expect(tile, entry.token).toHaveTextContent(
+        `/${ulyTokenToIpa(entry.token)}/`,
+      );
+    }
   });
 
   it('labels word-initial hamza carriers without yellow highlighting', () => {

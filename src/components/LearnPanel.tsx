@@ -4,7 +4,9 @@ import {
   ALPHABET_STUDY_ENTRIES,
   buildUlyToUeyStudy,
   UEY_JOINING_FORM_LABELS,
+  ULY_VOWELS,
   ulyTokenToIpa,
+  type AlphabetStudyEntry,
   type ConversionTrace,
   type UeyStudyLetter,
   type UeyStudyWord,
@@ -168,8 +170,7 @@ export function LearnPanel({ trace, value, onChange }: LearnPanelProps) {
           {ALPHABET_STUDY_ENTRIES.map((entry) => (
             <ReferenceTile
               key={entry.token}
-              source={entry.token}
-              output={entry.uey}
+              entry={entry}
             />
           ))}
         </div>
@@ -361,25 +362,25 @@ function WordShapeCell({ letter }: { letter: UeyStudyLetter }) {
   );
 }
 
-function ReferenceTile({
-  source,
-  output,
-}: {
-  source: string;
-  output: string;
-}) {
-  const ipa = ulyTokenToIpa(source);
+function ReferenceTile({ entry }: { entry: AlphabetStudyEntry }) {
+  const ipa = ulyTokenToIpa(entry.token);
+  const isVowel = ULY_VOWELS.has(entry.token);
+  const categoryClass = isVowel
+    ? 'bg-emerald-100 text-slate-950 ring-2 ring-emerald-300'
+    : entry.kind === 'digraph'
+      ? 'bg-violet-100 text-slate-950 ring-2 ring-violet-300'
+      : 'bg-sky-100 text-slate-950 ring-2 ring-sky-300';
 
   return (
     <div
-      className="grid min-h-20 content-center rounded-md border border-slate-200 bg-white px-2 py-2 text-center text-slate-950 ring-1 ring-slate-200"
+      className={`grid min-h-20 content-center rounded-md px-2 py-2 text-center ${categoryClass}`}
     >
-      <div className="font-mono text-sm font-semibold">{source}</div>
+      <div className="font-mono text-sm font-bold">{entry.token}</div>
       <div className="mt-0.5 font-mono text-xs font-semibold text-emerald-700">
         /{ipa}/
       </div>
       <div dir="rtl" lang="ug" className="mt-1 text-xl">
-        {output}
+        {entry.displayUey}
       </div>
     </div>
   );
