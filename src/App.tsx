@@ -1,4 +1,11 @@
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type MouseEvent as ReactMouseEvent,
+  type ReactNode,
+} from 'react';
 import {
   AlertTriangle,
   ArrowRight,
@@ -1627,12 +1634,36 @@ function ThemeToggle({
 }
 
 function KoFiSupportLink() {
+  const openPopup = (event: ReactMouseEvent<HTMLAnchorElement>) => {
+    const width = Math.min(440, window.screen.availWidth || 440);
+    const height = Math.min(700, window.screen.availHeight || 700);
+    const left = Math.max(
+      0,
+      Math.round(window.screenX + (window.outerWidth - width) / 2),
+    );
+    const top = Math.max(
+      0,
+      Math.round(window.screenY + (window.outerHeight - height) / 2),
+    );
+    const popup = window.open(
+      SUPPORT_URL,
+      'ugbridge-kofi-support',
+      `popup=yes,width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=yes`,
+    );
+
+    if (popup) {
+      event.preventDefault();
+      popup.focus();
+    }
+  };
+
   return (
     <a
       href={SUPPORT_URL}
       target="_blank"
       rel="noreferrer"
       aria-label="Buy me a coffee"
+      onClick={openPopup}
       className="fixed z-50 inline-flex h-[50px] items-center gap-1.5 rounded-full bg-[#72a4f2] px-4 text-[13px] font-semibold whitespace-nowrap text-white shadow-lg transition hover:bg-[#5d93e8] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
       style={{
         bottom: 'max(16px, env(safe-area-inset-bottom))',

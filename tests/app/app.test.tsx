@@ -362,20 +362,33 @@ describe('App conversion workflow', () => {
   });
 
   it('opens Ko-fi from reliable floating and footer links', () => {
+    const focus = vi.fn();
+    const open = vi
+      .spyOn(window, 'open')
+      .mockReturnValue({ focus } as unknown as Window);
     render(<App />);
 
-    expect(
-      screen.getByRole('link', { name: 'Buy me a coffee' }),
-    ).toHaveAttribute('href', 'https://ko-fi.com/reindex33');
-    expect(
-      screen.getByRole('link', { name: 'Buy me a coffee' }),
-    ).toHaveAttribute('target', '_blank');
+    const floatingLink = screen.getByRole('link', { name: 'Buy me a coffee' });
+    expect(floatingLink).toHaveAttribute('href', 'https://ko-fi.com/reindex33');
+    expect(floatingLink).toHaveAttribute('target', '_blank');
+
+    const click = new MouseEvent('click', { bubbles: true, cancelable: true });
+    floatingLink.dispatchEvent(click);
+
+    expect(click.defaultPrevented).toBe(true);
+    expect(open).toHaveBeenCalledWith(
+      'https://ko-fi.com/reindex33',
+      'ugbridge-kofi-support',
+      expect.stringContaining('popup=yes,width='),
+    );
+    expect(focus).toHaveBeenCalled();
     expect(
       screen.getByRole('link', { name: 'Buy me a coffee for UG Bridge' }),
     ).toHaveAttribute('href', 'https://ko-fi.com/reindex33');
     expect(
       document.querySelector(`script[src="${KOFI_WIDGET_SCRIPT_URL}"]`),
     ).not.toBeInTheDocument();
+    open.mockRestore();
   });
 
   it('shows local study profile data on the home page', () => {

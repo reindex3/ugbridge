@@ -348,10 +348,11 @@ Real access must be protected with Firebase Security Rules and Authentication.
 
 UG Bridge shows a compact floating "Buy me a coffee" link anchored to the
 bottom-right of the page for
-[`ko-fi.com/reindex33`](https://ko-fi.com/reindex33). It opens Ko-fi in a new
-tab because Ko-fi blocks its profile page from loading in a cross-origin
-iframe. The footer keeps a second link as a fallback. UG Bridge does not
-process payments or store payment details.
+[`ko-fi.com/reindex33`](https://ko-fi.com/reindex33). On desktop it opens Ko-fi
+in a small centered browser window because Ko-fi blocks its profile page from
+loading in a cross-origin iframe. If the browser blocks popups, the same link
+falls back to a new tab. The footer keeps a second link as another fallback. UG
+Bridge does not process payments or store payment details.
 
 ## Privacy and Data
 
@@ -366,7 +367,7 @@ a TTS provider that requires an endpoint. Image OCR downloads PP-OCRv5 runtime
 assets on demand and may download Tesseract assets and Uyghur traineddata from
 public CDNs when fallback is needed, but image recognition itself runs in the
 browser. The optional support link loads its logo from Ko-fi's CDN and opens
-the Ko-fi profile in a new tab.
+the Ko-fi profile in a small browser window or new tab.
 
 ## Deployment
 
