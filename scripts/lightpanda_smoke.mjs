@@ -22,11 +22,11 @@ const checks = [
     ],
   },
   {
-    name: 'support link opens Ko-fi directly',
+    name: 'official Ko-fi image button loads',
     path: '/',
     waitScript:
-      "(() => { const link = document.querySelector('a[aria-label=\"Buy me a coffee\"]'); return Boolean(link && link.href === 'https://ko-fi.com/reindex33' && link.target === '_blank' && !document.querySelector('script[src*=\"overlay-widget.js\"]')); })()",
-    expected: ['Buy me a coffee'],
+      "(() => { const link = document.querySelector('a[aria-label=\"Buy Me a Coffee at ko-fi.com\"]'); const image = link?.querySelector('img'); return Boolean(link && link.href === 'https://ko-fi.com/M7U3219YMD' && link.target === '_blank' && image?.src === 'https://storage.ko-fi.com/cdn/kofi6.png?v=6'); })()",
+    expected: ['Buy Me a Coffee at ko-fi.com'],
   },
   {
     name: 'converter restores shared text',

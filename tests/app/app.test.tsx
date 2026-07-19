@@ -2,9 +2,6 @@ import { act, fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import App from '../../src/App';
 
-const KOFI_WIDGET_SCRIPT_URL =
-  'https://storage.ko-fi.com/cdn/scripts/overlay-widget.js';
-
 describe('App conversion workflow', () => {
   beforeEach(() => {
     window.localStorage.clear();
@@ -361,34 +358,24 @@ describe('App conversion workflow', () => {
     expect(screen.getByLabelText('Dictionary search')).toBeInTheDocument();
   });
 
-  it('opens Ko-fi from reliable floating and footer links', () => {
-    const focus = vi.fn();
-    const open = vi
-      .spyOn(window, 'open')
-      .mockReturnValue({ focus } as unknown as Window);
+  it('loads the official Ko-fi image button with a footer fallback', () => {
     render(<App />);
 
-    const floatingLink = screen.getByRole('link', { name: 'Buy me a coffee' });
-    expect(floatingLink).toHaveAttribute('href', 'https://ko-fi.com/reindex33');
-    expect(floatingLink).toHaveAttribute('target', '_blank');
-
-    const click = new MouseEvent('click', { bubbles: true, cancelable: true });
-    floatingLink.dispatchEvent(click);
-
-    expect(click.defaultPrevented).toBe(true);
-    expect(open).toHaveBeenCalledWith(
-      'https://ko-fi.com/reindex33',
-      'ugbridge-kofi-support',
-      expect.stringContaining('popup=yes,width='),
+    const floatingLink = screen.getByRole('link', {
+      name: 'Buy Me a Coffee at ko-fi.com',
+    });
+    expect(floatingLink).toHaveAttribute(
+      'href',
+      'https://ko-fi.com/M7U3219YMD',
     );
-    expect(focus).toHaveBeenCalled();
+    expect(floatingLink).toHaveAttribute('target', '_blank');
     expect(
       screen.getByRole('link', { name: 'Buy me a coffee for UG Bridge' }),
     ).toHaveAttribute('href', 'https://ko-fi.com/reindex33');
-    expect(
-      document.querySelector(`script[src="${KOFI_WIDGET_SCRIPT_URL}"]`),
-    ).not.toBeInTheDocument();
-    open.mockRestore();
+    expect(screen.getByAltText('Buy Me a Coffee at ko-fi.com')).toHaveAttribute(
+      'src',
+      'https://storage.ko-fi.com/cdn/kofi6.png?v=6',
+    );
   });
 
   it('shows local study profile data on the home page', () => {

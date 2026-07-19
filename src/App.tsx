@@ -3,7 +3,6 @@ import {
   useMemo,
   useRef,
   useState,
-  type MouseEvent as ReactMouseEvent,
   type ReactNode,
 } from 'react';
 import {
@@ -99,7 +98,9 @@ import { analyzeReaderText } from './lib/reader';
 type Direction = 'uey-to-uly' | 'uly-to-uey';
 
 const SUPPORT_URL = 'https://ko-fi.com/reindex33';
-const KOFI_LOGO_URL = 'https://storage.ko-fi.com/cdn/logomarkLogo.png';
+const KOFI_WIDGET_URL = 'https://ko-fi.com/M7U3219YMD';
+const KOFI_BUTTON_IMAGE_URL = 'https://storage.ko-fi.com/cdn/kofi6.png?v=6';
+const KOFI_BUTTON_ALT = 'Buy Me a Coffee at ko-fi.com';
 type View =
   | 'home'
   | 'convert'
@@ -511,7 +512,7 @@ export default function App() {
 
   return (
     <div className="min-h-full bg-slate-100">
-      <KoFiSupportLink />
+      <KoFiOfficialButton />
       <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
         <header className="mb-6 flex flex-col gap-4 border-b border-slate-200 pb-5 md:flex-row md:items-start md:justify-between">
           <div>
@@ -1633,45 +1634,25 @@ function ThemeToggle({
   );
 }
 
-function KoFiSupportLink() {
-  const openPopup = (event: ReactMouseEvent<HTMLAnchorElement>) => {
-    const width = Math.min(440, window.screen.availWidth || 440);
-    const height = Math.min(700, window.screen.availHeight || 700);
-    const left = Math.max(
-      0,
-      Math.round(window.screenX + (window.outerWidth - width) / 2),
-    );
-    const top = Math.max(
-      0,
-      Math.round(window.screenY + (window.outerHeight - height) / 2),
-    );
-    const popup = window.open(
-      SUPPORT_URL,
-      'ugbridge-kofi-support',
-      `popup=yes,width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=yes`,
-    );
-
-    if (popup) {
-      event.preventDefault();
-      popup.focus();
-    }
-  };
-
+function KoFiOfficialButton() {
   return (
     <a
-      href={SUPPORT_URL}
+      href={KOFI_WIDGET_URL}
       target="_blank"
       rel="noreferrer"
-      aria-label="Buy me a coffee"
-      onClick={openPopup}
-      className="fixed z-50 inline-flex h-[50px] items-center gap-1.5 rounded-full bg-[#72a4f2] px-4 text-[13px] font-semibold whitespace-nowrap text-white shadow-lg transition hover:bg-[#5d93e8] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+      aria-label={KOFI_BUTTON_ALT}
+      className="fixed z-50 transition hover:opacity-85"
       style={{
         bottom: 'max(16px, env(safe-area-inset-bottom))',
         right: 'max(26px, env(safe-area-inset-right))',
       }}
     >
-      <img src={KOFI_LOGO_URL} alt="" className="size-[26px]" />
-      <span>Buy me a coffee</span>
+      <img
+        src={KOFI_BUTTON_IMAGE_URL}
+        alt={KOFI_BUTTON_ALT}
+        height={36}
+        className="h-9 border-0"
+      />
     </a>
   );
 }
