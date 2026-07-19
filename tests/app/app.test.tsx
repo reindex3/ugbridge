@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import App from '../../src/App';
 
@@ -9,21 +9,6 @@ describe('App conversion workflow', () => {
   beforeEach(() => {
     window.localStorage.clear();
     window.history.pushState({}, '', '/');
-    (
-      window as Window & {
-        __ugbridgeKoFiWidgetDrawn?: boolean;
-        kofiWidgetOverlay?: unknown;
-      }
-    ).__ugbridgeKoFiWidgetDrawn = false;
-    delete (
-      window as Window & {
-        __ugbridgeKoFiWidgetDrawn?: boolean;
-        kofiWidgetOverlay?: unknown;
-      }
-    ).kofiWidgetOverlay;
-    document
-      .querySelectorAll(`script[src="${KOFI_WIDGET_SCRIPT_URL}"]`)
-      .forEach((script) => script.remove());
     Object.defineProperty(navigator, 'clipboard', {
       configurable: true,
       value: {
@@ -376,69 +361,21 @@ describe('App conversion workflow', () => {
     expect(screen.getByLabelText('Dictionary search')).toBeInTheDocument();
   });
 
-  it('loads the Ko-fi widget with a footer buy-me-a-coffee fallback', async () => {
+  it('opens Ko-fi from reliable floating and footer links', () => {
     render(<App />);
 
     expect(
+      screen.getByRole('link', { name: 'Buy me a coffee' }),
+    ).toHaveAttribute('href', 'https://ko-fi.com/reindex33');
+    expect(
+      screen.getByRole('link', { name: 'Buy me a coffee' }),
+    ).toHaveAttribute('target', '_blank');
+    expect(
       screen.getByRole('link', { name: 'Buy me a coffee for UG Bridge' }),
     ).toHaveAttribute('href', 'https://ko-fi.com/reindex33');
-    await waitFor(() => {
-      expect(
-        document.querySelector(`script[src="${KOFI_WIDGET_SCRIPT_URL}"]`),
-      ).toBeInTheDocument();
-    });
-  });
-
-  it('draws a compact Ko-fi floating widget when the overlay is ready', async () => {
-    const draw = vi.fn(() => {
-      [
-        'kofi-wo-containerugbridge-kofi',
-        'kofi-wo-container-mobiugbridge-kofi',
-      ].forEach((id) => {
-        const iframe = document.createElement('iframe');
-        iframe.id = id;
-        document.body.append(iframe);
-      });
-    });
-    (
-      window as Window & {
-        kofiWidgetOverlay?: {
-          draw: ReturnType<typeof vi.fn>;
-        };
-      }
-    ).kofiWidgetOverlay = { draw };
-
-    render(<App />);
-
-    await waitFor(() => {
-      expect(draw).toHaveBeenCalledWith(
-        'reindex33',
-        expect.objectContaining({
-          type: 'floating-chat',
-          'floating-chat.cssId': 'ugbridge-kofi',
-          'floating-chat.donateButton.text': 'Buy me a coffee',
-          'floating-chat.donateButton.background-color': '#72a4f2',
-          'floating-chat.donateButton.text-color': '#ffffff',
-        }),
-      );
-    });
-
-    await waitFor(() => {
-      const iframe = document.getElementById(
-        'kofi-wo-containerugbridge-kofi',
-      ) as HTMLIFrameElement | null;
-
-      expect(iframe?.getAttribute('scrolling')).toBe('no');
-      expect(iframe?.style.transform).toBe('translateX(-10px)');
-      expect(
-        iframe?.contentDocument?.getElementById('ugbridge-kofi-image-style')
-          ?.textContent,
-      ).toContain('width: 26px');
-      expect(
-        iframe?.contentDocument?.getElementById('ugbridge-kofi-image-style')
-          ?.textContent,
-      ).toContain('font-size: 13px');
-    });
+    expect(
+      document.querySelector(`script[src="${KOFI_WIDGET_SCRIPT_URL}"]`),
+    ).not.toBeInTheDocument();
   });
 
   it('shows local study profile data on the home page', () => {

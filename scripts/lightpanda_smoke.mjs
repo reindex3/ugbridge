@@ -22,6 +22,13 @@ const checks = [
     ],
   },
   {
+    name: 'support link opens Ko-fi directly',
+    path: '/',
+    waitScript:
+      "(() => { const link = document.querySelector('a[aria-label=\"Buy me a coffee\"]'); return Boolean(link && link.href === 'https://ko-fi.com/reindex33' && link.target === '_blank' && !document.querySelector('script[src*=\"overlay-widget.js\"]')); })()",
+    expected: ['Buy me a coffee'],
+  },
+  {
     name: 'converter restores shared text',
     path: '/?view=convert&d=uly-to-uey&text=salam',
     waitScript: "document.body && document.body.textContent.includes('سالام')",

@@ -91,60 +91,8 @@ import { analyzeReaderText } from './lib/reader';
 
 type Direction = 'uey-to-uly' | 'uly-to-uey';
 
-const KOFI_PAGE_ID = 'reindex33';
 const SUPPORT_URL = 'https://ko-fi.com/reindex33';
-const KOFI_WIDGET_SCRIPT_URL =
-  'https://storage.ko-fi.com/cdn/scripts/overlay-widget.js';
-const KOFI_WIDGET_CSS_ID = 'ugbridge-kofi';
-const KOFI_WIDGET_BUTTON_TEXT = 'Buy me a coffee';
-const KOFI_WIDGET_COLOR = '#72a4f2';
-const KOFI_WIDGET_OFFSET_X = '-10px';
-const KOFI_WIDGET_IFRAME_STYLE_ID = 'ugbridge-kofi-image-style';
-const KOFI_WIDGET_IFRAME_IDS = [
-  `kofi-wo-container${KOFI_WIDGET_CSS_ID}`,
-  `kofi-wo-container-mobi${KOFI_WIDGET_CSS_ID}`,
-];
-const KOFI_WIDGET_IFRAME_CSS = `
-  html,
-  body {
-    overflow: hidden !important;
-  }
-
-  .floatingchat-donate-button {
-    font-size: 13px !important;
-    letter-spacing: 0 !important;
-    min-width: 0 !important;
-    overflow: hidden !important;
-    padding: 0 16px !important;
-  }
-
-  .floatingchat-donate-button span {
-    font-size: 13px !important;
-    line-height: 1 !important;
-    margin-left: 6px !important;
-    white-space: nowrap !important;
-  }
-
-  .kofiimg {
-    height: auto !important;
-    max-width: 26px !important;
-    min-width: 26px !important;
-    width: 26px !important;
-  }
-`;
-
-declare global {
-  interface Window {
-    __ugbridgeKoFiWidgetDrawn?: boolean;
-    kofiWidgetOverlay?: {
-      draw: (
-        pageId: string,
-        config: Record<string, string>,
-        containerId?: string,
-      ) => void;
-    };
-  }
-}
+const KOFI_LOGO_URL = 'https://storage.ko-fi.com/cdn/logomarkLogo.png';
 type View =
   | 'home'
   | 'convert'
@@ -556,7 +504,7 @@ export default function App() {
 
   return (
     <div className="min-h-full bg-slate-100">
-      <KoFiOverlayWidget />
+      <KoFiSupportLink />
       <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
         <header className="mb-6 flex flex-col gap-4 border-b border-slate-200 pb-5 md:flex-row md:items-start md:justify-between">
           <div>
@@ -1678,106 +1626,23 @@ function ThemeToggle({
   );
 }
 
-function KoFiOverlayWidget() {
-  useEffect(() => {
-    if (typeof document === 'undefined' || window.__ugbridgeKoFiWidgetDrawn) {
-      return;
-    }
-
-    let cancelled = false;
-    let styleTimeouts: number[] = [];
-
-    const clearStyleTimeouts = () => {
-      styleTimeouts.forEach((timeoutId) => window.clearTimeout(timeoutId));
-      styleTimeouts = [];
-    };
-
-    const styleWidgetImages = () => {
-      KOFI_WIDGET_IFRAME_IDS.forEach((iframeId) => {
-        const iframe = document.getElementById(
-          iframeId,
-        ) as HTMLIFrameElement | null;
-        const iframeDocument = iframe?.contentDocument;
-        const iframeHead = iframeDocument?.head;
-
-        if (!iframe || !iframeDocument || !iframeHead) {
-          return;
-        }
-
-        iframe.setAttribute('scrolling', 'no');
-        iframe.style.overflow = 'hidden';
-        iframe.style.transform = `translateX(${KOFI_WIDGET_OFFSET_X})`;
-
-        if (iframeDocument.getElementById(KOFI_WIDGET_IFRAME_STYLE_ID)) {
-          return;
-        }
-
-        const style = iframeDocument.createElement('style');
-        style.id = KOFI_WIDGET_IFRAME_STYLE_ID;
-        style.textContent = KOFI_WIDGET_IFRAME_CSS;
-        iframeHead.append(style);
-      });
-    };
-
-    const scheduleWidgetImageStyle = () => {
-      clearStyleTimeouts();
-      styleTimeouts = [0, 300, 900, 1800].map((delay) =>
-        window.setTimeout(styleWidgetImages, delay),
-      );
-    };
-
-    const drawWidget = () => {
-      if (
-        cancelled ||
-        window.__ugbridgeKoFiWidgetDrawn ||
-        !window.kofiWidgetOverlay
-      ) {
-        return;
-      }
-
-      window.kofiWidgetOverlay.draw(KOFI_PAGE_ID, {
-        type: 'floating-chat',
-        'floating-chat.cssId': KOFI_WIDGET_CSS_ID,
-        'floating-chat.donateButton.text': KOFI_WIDGET_BUTTON_TEXT,
-        'floating-chat.donateButton.background-color': KOFI_WIDGET_COLOR,
-        'floating-chat.donateButton.text-color': '#ffffff',
-      });
-      scheduleWidgetImageStyle();
-      window.__ugbridgeKoFiWidgetDrawn = true;
-    };
-
-    if (window.kofiWidgetOverlay) {
-      drawWidget();
-      return;
-    }
-
-    const existingScript = document.querySelector<HTMLScriptElement>(
-      `script[src="${KOFI_WIDGET_SCRIPT_URL}"]`,
-    );
-
-    if (existingScript) {
-      existingScript.addEventListener('load', drawWidget, { once: true });
-      return () => {
-        cancelled = true;
-        clearStyleTimeouts();
-        existingScript.removeEventListener('load', drawWidget);
-      };
-    }
-
-    const script = document.createElement('script');
-    script.src = KOFI_WIDGET_SCRIPT_URL;
-    script.async = true;
-    script.onload = drawWidget;
-    document.body.appendChild(script);
-
-    return () => {
-      cancelled = true;
-      clearStyleTimeouts();
-      script.onload = null;
-    };
-  }, []);
-
-  return null;
+function KoFiSupportLink() {
+  return (
+    <a
+      href={SUPPORT_URL}
+      target="_blank"
+      rel="noreferrer"
+      aria-label="Buy me a coffee"
+      className="fixed z-50 inline-flex h-[50px] items-center gap-1.5 rounded-full bg-[#72a4f2] px-4 text-[13px] font-semibold whitespace-nowrap text-white shadow-lg transition hover:bg-[#5d93e8] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+      style={{
+        bottom: 'max(16px, env(safe-area-inset-bottom))',
+        right: 'max(26px, env(safe-area-inset-right))',
+      }}
+    >
+      <img src={KOFI_LOGO_URL} alt="" className="size-[26px]" />
+      <span>Buy me a coffee</span>
+    </a>
+  );
 }
 
 function GitHubLink() {

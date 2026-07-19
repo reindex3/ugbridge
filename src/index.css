@@ -51,31 +51,6 @@ body {
     sans-serif;
 }
 
-body .floatingchat-container-wrap,
-body .floatingchat-container-wrap-mobi {
-  bottom: max(16px, env(safe-area-inset-bottom)) !important;
-  height: 50px !important;
-  left: auto !important;
-  max-width: calc(100vw - 32px) !important;
-  right: max(16px, env(safe-area-inset-right)) !important;
-  width: 180px !important;
-}
-
-body .floatingchat-container,
-body .floatingchat-container-mobi {
-  height: 50px !important;
-  overflow: hidden !important;
-  width: 180px !important;
-}
-
-body .floating-chat-kofi-popup-iframe,
-body .floating-chat-kofi-popup-iframe-mobi {
-  bottom: calc(max(16px, env(safe-area-inset-bottom)) + 62px) !important;
-  left: auto !important;
-  max-width: calc(100vw - 32px) !important;
-  right: max(16px, env(safe-area-inset-right)) !important;
-}
-
 :lang(ug) {
   font-family:
     'UKIJ Ekran Web',
