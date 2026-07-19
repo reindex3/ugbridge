@@ -1,11 +1,19 @@
-import { act, fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import App from '../../src/App';
+
+const KOFI_WIDGET_SCRIPT_URL =
+  'https://storage.ko-fi.com/cdn/scripts/overlay-widget.js';
 
 describe('App conversion workflow', () => {
   beforeEach(() => {
     window.localStorage.clear();
     window.history.pushState({}, '', '/');
+    window.__ugbridgeKoFiWidgetDrawn = false;
+    delete window.kofiWidgetOverlay;
+    document
+      .querySelectorAll(`script[src="${KOFI_WIDGET_SCRIPT_URL}"]`)
+      .forEach((script) => script.remove());
     Object.defineProperty(navigator, 'clipboard', {
       configurable: true,
       value: {
@@ -358,24 +366,58 @@ describe('App conversion workflow', () => {
     expect(screen.getByLabelText('Dictionary search')).toBeInTheDocument();
   });
 
-  it('loads the official Ko-fi image button with a footer fallback', () => {
+  it('loads the Ko-fi iframe widget with a footer fallback', async () => {
     render(<App />);
 
-    const floatingLink = screen.getByRole('link', {
-      name: 'Buy Me a Coffee at ko-fi.com',
-    });
-    expect(floatingLink).toHaveAttribute(
-      'href',
-      'https://ko-fi.com/M7U3219YMD',
-    );
-    expect(floatingLink).toHaveAttribute('target', '_blank');
     expect(
       screen.getByRole('link', { name: 'Buy me a coffee for UG Bridge' }),
     ).toHaveAttribute('href', 'https://ko-fi.com/reindex33');
-    expect(screen.getByAltText('Buy Me a Coffee at ko-fi.com')).toHaveAttribute(
-      'src',
-      'https://storage.ko-fi.com/cdn/kofi6.png?v=6',
-    );
+    await waitFor(() => {
+      expect(
+        document.querySelector(`script[src="${KOFI_WIDGET_SCRIPT_URL}"]`),
+      ).toBeInTheDocument();
+    });
+  });
+
+  it('draws the compact Ko-fi floating iframe widget when ready', async () => {
+    const draw = vi.fn(() => {
+      ['kofi-wo-containerugbridge-kofi', 'kofi-wo-container-mobiugbridge-kofi'].forEach(
+        (id) => {
+          const iframe = document.createElement('iframe');
+          iframe.id = id;
+          document.body.append(iframe);
+        },
+      );
+    });
+    window.kofiWidgetOverlay = { draw };
+
+    render(<App />);
+
+    await waitFor(() => {
+      expect(draw).toHaveBeenCalledWith(
+        'reindex33',
+        expect.objectContaining({
+          type: 'floating-chat',
+          'floating-chat.cssId': 'ugbridge-kofi',
+          'floating-chat.donateButton.text': 'Buy me a coffee',
+          'floating-chat.donateButton.background-color': '#72a4f2',
+          'floating-chat.donateButton.text-color': '#ffffff',
+        }),
+      );
+    });
+
+    await waitFor(() => {
+      const iframe = document.getElementById(
+        'kofi-wo-containerugbridge-kofi',
+      ) as HTMLIFrameElement | null;
+
+      expect(iframe?.getAttribute('scrolling')).toBe('no');
+      expect(iframe?.style.transform).toBe('translateX(-10px)');
+      expect(
+        iframe?.contentDocument?.getElementById('ugbridge-kofi-image-style')
+          ?.textContent,
+      ).toContain('width: 26px');
+    });
   });
 
   it('shows local study profile data on the home page', () => {

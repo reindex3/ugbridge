@@ -346,10 +346,11 @@ Real access must be protected with Firebase Security Rules and Authentication.
 
 ## Buy Me a Coffee
 
-UG Bridge uses Ko-fi's official image button for widget ID `M7U3219YMD`,
-anchored to the bottom-right of the page. It opens Ko-fi in a new tab, and the
-footer keeps a direct profile link as a fallback. UG Bridge does not process
-payments or store payment details.
+UG Bridge uses Ko-fi's official compact floating tip widget for
+[`ko-fi.com/reindex33`](https://ko-fi.com/reindex33), anchored to the
+bottom-right of the page. It opens Ko-fi's embedded tip iframe, and the footer
+keeps a direct profile link as a fallback. UG Bridge does not process payments
+or store payment details.
 
 ## Privacy and Data
 
@@ -363,7 +364,8 @@ The app sends text to a network service only when a user configures or selects
 a TTS provider that requires an endpoint. Image OCR downloads PP-OCRv5 runtime
 assets on demand and may download Tesseract assets and Uyghur traineddata from
 public CDNs when fallback is needed, but image recognition itself runs in the
-browser. The optional support button loads its image from Ko-fi's CDN.
+browser. The optional support widget loads Ko-fi assets from Ko-fi's CDN so
+supporters can open the embedded Ko-fi tip panel from the site.
 
 ## Deployment
 
